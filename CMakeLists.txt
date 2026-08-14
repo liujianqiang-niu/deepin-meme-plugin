@@ -34,8 +34,8 @@ add_subdirectory(src/control-center-plugin)
 add_subdirectory(src/desktop-daemon)
 
 # 安装所有主题包
-install(DIRECTORY data/themes/example data/themes/scifi-hero data/themes/pixel-monster
-               data/themes/cosmic data/themes/fireworks data/themes/ninja
+install(DIRECTORY data/themes/laser-hero data/themes/plant-guard data/themes/ninja-slash
+               data/themes/cosmic-star data/themes/firework-burst
     DESTINATION ${MEME_THEME_DIR}
     PATTERN "manifest.schema.json" EXCLUDE)
 

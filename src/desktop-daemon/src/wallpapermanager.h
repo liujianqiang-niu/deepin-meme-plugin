@@ -10,13 +10,8 @@ namespace meme {
 class ThemeResolver;
 }
 
-class QMediaPlayer;
-class QVideoWidget;
-class QWidget;
-
-// 动态壁纸管理器: 在桌面背景层循环播放视频壁纸
-// 实现策略: 创建 Qt::Desktop 类型窗口(_NET_WM_WINDOW_TYPE_DESKTOP),
-//           位于桌面图标层(CanvasView)之下,不覆盖图标。
+// 静态壁纸管理器: 通过 Appearance1 D-Bus 设置桌面壁纸
+// 使用系统级壁纸设置机制,不会创建额外窗口,不覆盖桌面图标。
 class WallpaperManager : public QObject
 {
     Q_OBJECT
@@ -24,29 +19,20 @@ public:
     explicit WallpaperManager(meme::ThemeResolver *resolver, QObject *parent = nullptr);
     ~WallpaperManager();
 
-    // 启用动态壁纸(应用当前主题的 wallpaper.mp4)
     void enable();
-
-    // 禁用动态壁纸
     void disable();
-
-    // 切换主题时重新应用壁纸
     void setTheme(const QString &themeId);
 
     bool isActive() const { return m_active; }
 
 private:
-    // 创建 Qt::Desktop 类型视频窗口(位于桌面图标层之下)
-    bool createVideoWallpaperWindow(const QString &videoPath);
+    bool setWallpaperViaDBus(const QString &imagePath);
 
 private:
     meme::ThemeResolver *m_resolver;
     QString m_currentTheme;
     bool m_active = false;
-
-    QMediaPlayer *m_wallpaperPlayer = nullptr;
-    QVideoWidget *m_wallpaperWidget = nullptr;
-    QWidget *m_wallpaperWindow = nullptr;
+    QString m_previousWallpaper;
 };
 
 #endif // WALLPAPERMANAGER_H

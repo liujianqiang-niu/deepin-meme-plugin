@@ -4,11 +4,9 @@
 #include "themeresolver.h"
 #include "thememanifest.h"
 
-#include <QGuiApplication>
-#include <QScreen>
-#include <QMediaPlayer>
-#include <QVideoWidget>
-#include <QWidget>
+#include <QDBusConnection>
+#include <QDBusInterface>
+#include <QDBusReply>
 #include <QFile>
 #include <QLoggingCategory>
 
@@ -20,13 +18,7 @@ WallpaperManager::WallpaperManager(meme::ThemeResolver *resolver, QObject *paren
 {
 }
 
-WallpaperManager::~WallpaperManager()
-{
-    if (m_wallpaperWindow) {
-        m_wallpaperWindow->hide();
-        delete m_wallpaperWindow;
-    }
-}
+WallpaperManager::~WallpaperManager() = default;
 
 void WallpaperManager::setTheme(const QString &themeId)
 {
@@ -52,17 +44,28 @@ void WallpaperManager::enable()
     }
 
     const QString themeDir = m_resolver->themeDirectory(m_currentTheme);
-    const QString videoPath = meme::resolvePath(themeDir, manifest->wallpaperPath);
+    const QString imagePath = meme::resolvePath(themeDir, manifest->wallpaperPath);
 
-    if (videoPath.isEmpty() || !QFile::exists(videoPath)) {
-        qCWarning(memeWallpaper) << "Wallpaper video not found:" << videoPath;
+    if (imagePath.isEmpty() || !QFile::exists(imagePath)) {
+        qCWarning(memeWallpaper) << "Wallpaper image not found:" << imagePath;
         return;
     }
 
-    qCInfo(memeWallpaper) << "Enabling dynamic wallpaper, theme:" << m_currentTheme;
+    // 保存当前壁纸,以便禁用时恢复
+    QDBusInterface iface("org.deepin.dde.Appearance1",
+                         "/org/deepin/dde/Appearance1",
+                         "org.deepin.dde.Appearance1",
+                         QDBusConnection::sessionBus());
+    if (iface.isValid()) {
+        QDBusReply<QString> bgReply = iface.call("GetCurrentWorkspaceBackground");
+        if (bgReply.isValid()) {
+            m_previousWallpaper = bgReply.value();
+        }
+    }
 
-    if (createVideoWallpaperWindow(videoPath)) {
+    if (setWallpaperViaDBus(imagePath)) {
         m_active = true;
+        qCInfo(memeWallpaper) << "Static wallpaper set:" << imagePath;
     }
 }
 
@@ -70,46 +73,31 @@ void WallpaperManager::disable()
 {
     if (!m_active) return;
 
-    if (m_wallpaperWindow) {
-        m_wallpaperWindow->hide();
-        if (m_wallpaperPlayer) m_wallpaperPlayer->stop();
+    if (!m_previousWallpaper.isEmpty()) {
+        setWallpaperViaDBus(m_previousWallpaper);
     }
 
     m_active = false;
-    qCInfo(memeWallpaper) << "Dynamic wallpaper disabled";
+    qCInfo(memeWallpaper) << "Wallpaper restored to:" << m_previousWallpaper;
 }
 
-bool WallpaperManager::createVideoWallpaperWindow(const QString &videoPath)
+bool WallpaperManager::setWallpaperViaDBus(const QString &imagePath)
 {
-    // Qt::Desktop 窗口类型映射到 _NET_WM_WINDOW_TYPE_DESKTOP,
-    // 位于桌面图标层(CanvasView)之下,不会覆盖图标。
-    if (!m_wallpaperWindow) {
-        m_wallpaperWindow = new QWidget();
-        m_wallpaperWindow->setWindowFlags(Qt::Desktop);
-        m_wallpaperWindow->setAttribute(Qt::WA_TranslucentBackground);
-        m_wallpaperWindow->setAttribute(Qt::WA_ShowWithoutActivating);
-
-        m_wallpaperWidget = new QVideoWidget(m_wallpaperWindow);
-        m_wallpaperPlayer = new QMediaPlayer(this);
-        m_wallpaperPlayer->setVideoOutput(m_wallpaperWidget);
-        m_wallpaperPlayer->setAudioOutput(nullptr);
+    QDBusInterface iface("org.deepin.dde.Appearance1",
+                         "/org/deepin/dde/Appearance1",
+                         "org.deepin.dde.Appearance1",
+                         QDBusConnection::sessionBus());
+    if (!iface.isValid()) {
+        qCWarning(memeWallpaper) << "Appearance1 D-Bus unavailable";
+        return false;
     }
 
-    QScreen *screen = QGuiApplication::primaryScreen();
-    if (!screen) return false;
-    m_wallpaperWindow->setGeometry(screen->geometry());
-    m_wallpaperWidget->setGeometry(0, 0, screen->geometry().width(), screen->geometry().height());
+    const QString url = "file://" + imagePath;
 
-    m_wallpaperPlayer->setSource(QUrl::fromLocalFile(videoPath));
-    connect(m_wallpaperPlayer, &QMediaPlayer::playbackStateChanged, this,
-        [this](QMediaPlayer::PlaybackState state) {
-            if (state == QMediaPlayer::StoppedState && m_active) {
-                m_wallpaperPlayer->play();
-            }
-        }, Qt::UniqueConnection);
-
-    m_wallpaperWindow->show();
-    m_wallpaperPlayer->play();
-    qCInfo(memeWallpaper) << "Video wallpaper window created:" << videoPath;
+    QDBusReply<void> reply = iface.call("SetCurrentWorkspaceBackground", url);
+    if (!reply.isValid()) {
+        qCWarning(memeWallpaper) << "SetCurrentWorkspaceBackground failed:" << reply.error().message();
+        return false;
+    }
     return true;
 }

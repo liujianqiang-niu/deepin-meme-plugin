@@ -1,7 +1,17 @@
 # Build
 build/
+obj-*/
 cmake-build-*/
 out/
+
+# Debian build artifacts
+debian/*.debhelper.log
+debian/files
+debian/*.substvars
+../deepin-meme-plugin_*.buildinfo
+../deepin-meme-plugin_*.changes
+../deepin-meme-plugin_*.deb
+../deepin-meme-plugin-data_*.deb
 
 # IDE
 .vscode/

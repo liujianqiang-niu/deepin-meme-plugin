@@ -50,8 +50,15 @@ qt_add_qml_module(meme_qml
 add_library(${PLUGIN_NAME} MODULE ${PLUGIN_SRCS})
 set_target_properties(${PLUGIN_NAME} PROPERTIES PREFIX "")
 
+# DccFactory 符号在 libdde-control-center.so 中,插件必须链接它
+find_library(DCC_LIBRARY NAMES dde-control-center)
+if(NOT DCC_LIBRARY)
+    message(FATAL_ERROR "libdde-control-center not found. Install dde-control-center-dev or dde-control-center.")
+endif()
+
 target_link_libraries(${PLUGIN_NAME} PRIVATE
     meme-common
+    ${DCC_LIBRARY}
     Qt6::Core
     Qt6::Gui
     Qt6::Multimedia

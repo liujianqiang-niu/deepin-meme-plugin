@@ -5,6 +5,7 @@
 
 #include <QApplication>
 #include <QDBusConnection>
+#include <QDBusError>
 #include <QLoggingCategory>
 #include <QProcessEnvironment>
 #include <cstdlib>
@@ -30,8 +31,16 @@ public:
     }
 
 public Q_SLOTS:
-    void SetWallpaper(const QString &path) { m_player->setVideo(path); }
-    void Stop() { m_player->stop(); }
+    void SetWallpaper(const QString &path)
+    {
+        qCInfo(memeDaemon) << "SetWallpaper called:" << path;
+        m_player->setVideo(path);
+    }
+    void Stop()
+    {
+        qCInfo(memeDaemon) << "Stop called";
+        m_player->stop();
+    }
 
 private:
     WallpaperPlayer *m_player;
@@ -55,10 +64,14 @@ int main(int argc, char *argv[])
     MemeDaemon daemon(&player);
 
     auto bus = QDBusConnection::sessionBus();
-    bus.registerService(kDBusService);
-    bus.registerObject(kDBusPath, &daemon, QDBusConnection::ExportAllSlots);
+    if (!bus.registerService(kDBusService)) {
+        qCWarning(memeDaemon) << "Failed to register D-Bus service:" << bus.lastError().message();
+    }
+    if (!bus.registerObject(kDBusPath, &daemon, QDBusConnection::ExportAllSlots)) {
+        qCWarning(memeDaemon) << "Failed to register D-Bus object:" << bus.lastError().message();
+    }
 
-    qCInfo(memeDaemon) << "Started.";
+    qCInfo(memeDaemon) << "Started. D-Bus service:" << kDBusService;
 
     return app.exec();
 }

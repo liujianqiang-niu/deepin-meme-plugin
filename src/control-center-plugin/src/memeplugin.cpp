@@ -9,6 +9,8 @@
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingCall>
+#include <QDBusPendingCallWatcher>
+#include <QDBusPendingReply>
 #include <QUrl>
 #include <QStandardPaths>
 #include <QLoggingCategory>
@@ -93,6 +95,8 @@ QVariantList MemePlugin::wallpaperModel() const
 
 void MemePlugin::applyWallpaper(const QString &path)
 {
+    qCInfo(memePlugin) << "applyWallpaper:" << path;
+
     setCurrentVideo(path);
 
     meme::MemeDConfig cfg;
@@ -103,9 +107,23 @@ void MemePlugin::applyWallpaper(const QString &path)
         emit enabledChanged(true);
     }
 
-    QDBusConnection::sessionBus().asyncCall(QDBusMessage::createMethodCall(
+    auto msg = QDBusMessage::createMethodCall(
         "org.deepin.meme.daemon", "/org/deepin/meme/daemon",
-        "org.deepin.meme.daemon", "SetWallpaper") << path);
+        "org.deepin.meme.daemon", "SetWallpaper");
+    msg << path;
+
+    auto call = QDBusConnection::sessionBus().asyncCall(msg);
+    auto *watcher = new QDBusPendingCallWatcher(call, this);
+    connect(watcher, &QDBusPendingCallWatcher::finished, this, [this, path](QDBusPendingCallWatcher *w) {
+        QDBusPendingReply<void> reply = *w;
+        if (reply.isError()) {
+            qCWarning(memePlugin) << "D-Bus SetWallpaper failed:" << reply.error().message()
+                                  << "path:" << path;
+        } else {
+            qCInfo(memePlugin) << "D-Bus SetWallpaper succeeded, path:" << path;
+        }
+        w->deleteLater();
+    });
 
     qCInfo(memePlugin) << "Applied wallpaper:" << path;
 }

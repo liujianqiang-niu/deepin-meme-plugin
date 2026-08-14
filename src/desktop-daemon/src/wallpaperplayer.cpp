@@ -9,6 +9,7 @@
 #include <QVideoWidget>
 #include <QWidget>
 #include <QFile>
+#include <QTimer>
 #include <QLoggingCategory>
 
 Q_LOGGING_CATEGORY(memeWallpaper, "meme.wallpaper")
@@ -16,11 +17,10 @@ Q_LOGGING_CATEGORY(memeWallpaper, "meme.wallpaper")
 WallpaperPlayer::WallpaperPlayer(QObject *parent)
     : QObject(parent)
 {
-    // Qt::Desktop 映射到 _NET_WM_WINDOW_TYPE_DESKTOP,
-    // kwin 将其放在桌面图标层之下,不会遮挡图标。
     m_window = new QWidget();
-    m_window->setWindowFlags(Qt::Desktop);
+    m_window->setWindowFlags(Qt::FramelessWindowHint | Qt::Window);
     m_window->setAttribute(Qt::WA_TranslucentBackground);
+    m_window->setAttribute(Qt::WA_ShowWithoutActivating);
 
     m_videoWidget = new QVideoWidget(m_window);
     m_player = new QMediaPlayer(this);
@@ -48,14 +48,29 @@ void WallpaperPlayer::setVideo(const QString &path)
         return;
     }
 
+    QRect geo;
     QScreen *screen = QGuiApplication::primaryScreen();
-    if (!screen) return;
-    m_window->setGeometry(screen->geometry());
-    m_videoWidget->setGeometry(0, 0, screen->geometry().width(), screen->geometry().height());
+    if (screen) geo = screen->geometry();
+    if (geo.isEmpty()) geo = QRect(0, 0, 1920, 1080);
+
+    m_window->setGeometry(geo);
+    m_videoWidget->setGeometry(0, 0, geo.width(), geo.height());
+    qCInfo(memeWallpaper) << "Window geometry:" << geo;
 
     m_player->setSource(QUrl::fromLocalFile(path));
     m_window->show();
     m_player->play();
+
+    // 延迟再设一次几何,以防 show 后窗口被 WM 改了大小
+    QTimer::singleShot(500, this, [this, geo]() {
+        QRect cur = m_window->geometry();
+        if (cur.width() <= 1 || cur.height() <= 1) {
+            m_window->setGeometry(geo);
+            m_videoWidget->setGeometry(0, 0, geo.width(), geo.height());
+            qCInfo(memeWallpaper) << "Re-applied geometry:" << geo;
+        }
+    });
+
     qCInfo(memeWallpaper) << "Playing video wallpaper:" << path;
 }
 

@@ -49,8 +49,8 @@ qt_add_lupdate(LTS_FILES
 qt_add_lrelease(QM_FILES
     TS_FILES translations/deepin-meme-plugin_zh_CN.ts)
 
-install(FILES ${QM_FILES}
-    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/deepin-meme-plugin/translations)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/deepin-meme-plugin_zh_CN.qm
+    DESTINATION /usr/share/deepin-meme-plugin/translations)
 
 install(FILES data/dbus/org.deepin.meme.daemon.service
     DESTINATION /usr/share/dbus-1/services)

@@ -26,6 +26,12 @@ EffectOverlay::EffectOverlay(EffectPlayer *player, WallpaperManager *wallpaperMg
         m_player->setVolume(m_effectVolume);
         qCInfo(memeOverlay) << "Loaded config: enabled=" << m_enabled
                             << "theme=" << m_currentTheme << "vol=" << m_effectVolume;
+
+        // 启动时恢复动态壁纸: 用户之前启用了特效,重启 daemon 后应自动恢复
+        if (m_enabled && m_wallpaperManager) {
+            m_wallpaperManager->setTheme(m_currentTheme);
+            m_wallpaperManager->enable();
+        }
     }
 }
 

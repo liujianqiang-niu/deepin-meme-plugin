@@ -8,7 +8,7 @@ DccObject {
     id: root
     name: "meme"                    // 必须与插件名一致
     parentName: "personalization"   // 挂载到个性化模块下
-    displayName: qsTr("趣味壁纸")
+    displayName: qsTr("动态壁纸")
     icon: "meme_icon"
     weight: 350                     // 在 wallpaper(300) 之后
     visible: true

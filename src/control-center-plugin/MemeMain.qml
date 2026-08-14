@@ -4,12 +4,13 @@ import org.deepin.dcc 1.0
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Controls 2.15
+import QtMultimedia
 
 DccObject {
     DccObject {
         name: "memeEnabled"
         parentName: "meme"
-        displayName: qsTr("启用特效")
+        displayName: qsTr("启用动态壁纸")
         weight: 10
         pageType: DccObject.Editor
         backgroundType: DccObject.Normal
@@ -20,35 +21,60 @@ DccObject {
     }
 
     DccObject {
-        name: "memeTheme"
+        name: "memeWallpaperList"
         parentName: "meme"
-        displayName: qsTr("特效主题")
+        displayName: qsTr("动态壁纸")
         weight: 20
-        pageType: DccObject.Editor
+        pageType: DccObject.Item
         backgroundType: DccObject.Normal
-        page: RowLayout {
+        page: ColumnLayout {
             spacing: 8
-            ComboBox {
-                id: themeCombo
+            Layout.fillWidth: true
+
+            ListView {
+                id: wallpaperList
                 Layout.fillWidth: true
-                model: dccData.themeModel
-                textRole: "name"
-                valueRole: "id"
-                currentIndex: {
-                    for (var i = 0; i < dccData.themeModel.length; i++) {
-                        if (dccData.themeModel[i].id === dccData.currentTheme)
-                            return i
+                Layout.preferredHeight: contentHeight
+                model: dccData.wallpaperModel
+                spacing: 4
+                interactive: false
+
+                delegate: Rectangle {
+                    width: wallpaperList.width
+                    height: 60
+                    radius: 6
+                    color: modelData.path === dccData.currentVideo ? "#2b5d8a" : "#1e2a3a"
+                    border.color: modelData.path === dccData.currentVideo ? "#4a90d9" : "#333"
+                    border.width: 1
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        spacing: 10
+
+                        Text {
+                            text: modelData.name
+                            color: "#ddd"
+                            font.pixelSize: 13
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                        }
+
+                        Button {
+                            text: qsTr("预览")
+                            onClicked: {
+                                previewVideo.source = "file://" + modelData.path
+                                previewVideo.visible = true
+                                previewVideo.play()
+                            }
+                        }
+
+                        Button {
+                            text: qsTr("应用")
+                            enabled: modelData.path !== dccData.currentVideo
+                            onClicked: dccData.applyWallpaper(modelData.path)
+                        }
                     }
-                    return 0
-                }
-                property string selectedTheme: dccData.currentTheme
-                onActivated: selectedTheme = currentValue
-            }
-            Button {
-                text: qsTr("应用")
-                enabled: themeCombo.selectedTheme !== "" && themeCombo.selectedTheme !== dccData.currentTheme
-                onClicked: {
-                    dccData.currentTheme = themeCombo.selectedTheme
                 }
             }
         }
@@ -57,48 +83,33 @@ DccObject {
     DccObject {
         name: "memePreview"
         parentName: "meme"
-        displayName: qsTr("效果预览")
+        displayName: qsTr("预览")
         weight: 30
         pageType: DccObject.Item
         backgroundType: DccObject.Normal
-        page: MemePreview {
-            id: memePreview
-            themeId: dccData.currentTheme
-            enabled: dccData.enabled
-            wallpaperUrl: dccData.enabled ? dccData.previewVideoUrl(dccData.currentTheme) : ""
-            onPreviewEffectRequested: (effectType) => {
-                var url = dccData.effectVideoUrl(dccData.currentTheme, effectType)
-                memePreview.playEffect(url)
-                dccData.previewEffect(effectType)
-            }
-        }
-    }
+        page: Rectangle {
+            id: previewContainer
+            color: "#000"
+            implicitHeight: 240
+            implicitWidth: 480
+            clip: true
 
-    DccObject {
-        name: "memeSettings"
-        parentName: "meme"
-        displayName: qsTr("高级设置")
-        weight: 40
-        pageType: DccObject.Editor
-        backgroundType: DccObject.Normal
-        page: ColumnLayout {
-            spacing: 6
-            Label {
-                text: qsTr("音效音量：调节特效播放时的音量大小")
-                font.pixelSize: 12
-                color: "#888"
-                Layout.fillWidth: true
+            Video {
+                id: previewVideo
+                anchors.fill: parent
+                fillMode: VideoOutput.PreserveAspectFit
+                visible: false
+                muted: true
+                loops: MediaPlayer.Infinite
+                onStopped: visible = false
             }
-            RowLayout {
-                Layout.fillWidth: true
-                Label { text: qsTr("静音"); font.pixelSize: 11; color: "#aaa" }
-                Slider {
-                    Layout.fillWidth: true
-                    from: 0; to: 100
-                    value: dccData.effectVolume
-                    onMoved: dccData.effectVolume = value
-                }
-                Label { text: qsTr("最大"); font.pixelSize: 11; color: "#aaa" }
+
+            Text {
+                anchors.centerIn: parent
+                text: qsTr("点击预览按钮查看效果")
+                color: "#666"
+                font.pixelSize: 14
+                visible: !previewVideo.visible
             }
         }
     }

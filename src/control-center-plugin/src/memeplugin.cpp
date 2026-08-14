@@ -1,45 +1,48 @@
 // SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "memeplugin.h"
-#include "memethememanager.h"
-#include "thememanifest.h"
-#include "memeconfig.h"
 #include "memedconfig.h"
 
 #include "dccfactory.h"
 
+#include <QDir>
 #include <QDBusConnection>
 #include <QDBusMessage>
-#include <QDir>
 #include <QStandardPaths>
+#include <QLoggingCategory>
+
+Q_LOGGING_CATEGORY(memePlugin, "meme.plugin")
+
+static const char *kWallpaperDir = "/usr/share/deepin-meme-wallpapers";
 
 MemePlugin::MemePlugin(QObject *parent)
     : QObject(parent)
-    , m_themeManager(new meme::MemeThemeManager(this))
 {
-    m_themeManager->scanThemes();
+    loadWallpaperList();
 
-    // 从 DConfig 读取配置
-    meme::MemeDConfig dconfig;
-    if (dconfig.isValid()) {
-        m_enabled = dconfig.enabled();
-        m_effectVolume = dconfig.effectVolume();
-        m_currentTheme = dconfig.currentTheme();
-        // 如果配置的主题不存在,选择第一个可用主题
-        const auto themes = m_themeManager->availableThemes();
-        if (!themes.isEmpty() && !themes.contains(m_currentTheme)) {
-            m_currentTheme = themes.first();
-        }
-    } else {
-        // DConfig 不可用时的默认值
-        m_enabled = false;
-        m_effectVolume = 80;
-        const auto themes = m_themeManager->availableThemes();
-        if (!themes.isEmpty()) m_currentTheme = themes.first();
+    meme::MemeDConfig cfg;
+    if (cfg.isValid()) {
+        m_enabled = cfg.enabled();
+        m_currentVideo = cfg.currentVideo();
     }
 }
 
 MemePlugin::~MemePlugin() = default;
+
+void MemePlugin::loadWallpaperList()
+{
+    m_wallpapers.clear();
+    QDir dir(QString::fromUtf8(kWallpaperDir));
+    if (!dir.exists()) return;
+
+    const auto files = dir.entryList({"*.mp4"}, QDir::Files, QDir::Name);
+    for (const QString &file : files) {
+        WallpaperEntry entry;
+        entry.name = file;
+        entry.path = dir.absoluteFilePath(file);
+        m_wallpapers.append(entry);
+    }
+}
 
 bool MemePlugin::enabled() const { return m_enabled; }
 
@@ -49,100 +52,60 @@ void MemePlugin::setEnabled(bool e)
         m_enabled = e;
         emit enabledChanged(e);
 
-        // 持久化到 DConfig
-        meme::MemeDConfig dconfig;
-        dconfig.setEnabled(e);
+        meme::MemeDConfig cfg;
+        cfg.setEnabled(e);
 
-        auto bus = QDBusConnection::sessionBus();
-        bus.call(QDBusMessage::createMethodCall(
-            "org.deepin.meme.daemon",
-            "/org/deepin/meme/daemon",
-            "org.deepin.meme.daemon",
-            "SetEnabled") << e);
+        if (!e) {
+            QDBusConnection::sessionBus().call(QDBusMessage::createMethodCall(
+                "org.deepin.meme.daemon", "/org/deepin/meme/daemon",
+                "org.deepin.meme.daemon", "Stop"));
+        } else if (!m_currentVideo.isEmpty()) {
+            applyWallpaper(m_currentVideo);
+        }
     }
 }
 
-QString MemePlugin::currentTheme() const { return m_currentTheme; }
+QString MemePlugin::currentVideo() const { return m_currentVideo; }
 
-void MemePlugin::setCurrentTheme(const QString &id)
+void MemePlugin::setCurrentVideo(const QString &path)
 {
-    if (m_currentTheme != id) {
-        m_currentTheme = id;
-        emit currentThemeChanged(id);
-
-        // 持久化到 DConfig
-        meme::MemeDConfig dconfig;
-        dconfig.setCurrentTheme(id);
-
-        auto bus = QDBusConnection::sessionBus();
-        bus.call(QDBusMessage::createMethodCall(
-            "org.deepin.meme.daemon",
-            "/org/deepin/meme/daemon",
-            "org.deepin.meme.daemon",
-            "SetTheme") << id);
+    if (m_currentVideo != path) {
+        m_currentVideo = path;
+        emit currentVideoChanged(path);
+        meme::MemeDConfig cfg;
+        cfg.setCurrentVideo(path);
     }
 }
 
-QStringList MemePlugin::themeList() const
-{
-    return m_themeManager->availableThemes();
-}
-
-QVariantList MemePlugin::themeModel() const
+QVariantList MemePlugin::wallpaperModel() const
 {
     QVariantList model;
-    for (const QString &id : m_themeManager->availableThemes()) {
-        auto m = m_themeManager->manifest(id);
-        if (!m) continue;
+    for (const auto &w : m_wallpapers) {
         QVariantMap entry;
-        entry[QStringLiteral("id")] = id;
-        entry[QStringLiteral("name")] = m->name;
+        entry[QStringLiteral("name")] = w.name;
+        entry[QStringLiteral("path")] = w.path;
         model.append(entry);
     }
     return model;
 }
 
-int MemePlugin::effectVolume() const { return m_effectVolume; }
-
-void MemePlugin::setEffectVolume(int vol)
+void MemePlugin::applyWallpaper(const QString &path)
 {
-    if (m_effectVolume != vol) {
-        m_effectVolume = vol;
-        emit effectVolumeChanged(vol);
+    setCurrentVideo(path);
 
-        meme::MemeDConfig dconfig;
-        dconfig.setEffectVolume(vol);
+    meme::MemeDConfig cfg;
+    cfg.setEnabled(true);
+
+    if (!m_enabled) {
+        m_enabled = true;
+        emit enabledChanged(true);
     }
-}
 
-QString MemePlugin::previewVideoUrl(const QString &themeId) const
-{
-    const auto manifest = m_themeManager->manifest(themeId);
-    if (!manifest) return {};
-    const QString themeDir = m_themeManager->themeDirectory(themeId);
-    return meme::resolvePath(themeDir, manifest->wallpaperPath);
-}
+    QDBusConnection::sessionBus().call(QDBusMessage::createMethodCall(
+        "org.deepin.meme.daemon", "/org/deepin/meme/daemon",
+        "org.deepin.meme.daemon", "SetWallpaper") << path);
 
-QString MemePlugin::effectVideoUrl(const QString &themeId, const QString &effectType) const
-{
-    auto typeOpt = meme::stringToEffectType(effectType);
-    if (!typeOpt) return {};
-    auto manifest = m_themeManager->manifest(themeId);
-    if (!manifest) return {};
-    auto it = manifest->effects.find(*typeOpt);
-    if (it == manifest->effects.end()) return {};
-    const QString themeDir = m_themeManager->themeDirectory(themeId);
-    return meme::resolvePath(themeDir, it->videoPath);
-}
-
-void MemePlugin::previewEffect(const QString &effectType)
-{
-    auto bus = QDBusConnection::sessionBus();
-    bus.call(QDBusMessage::createMethodCall(
-        "org.deepin.meme.daemon",
-        "/org/deepin/meme/daemon",
-        "org.deepin.meme.daemon",
-        "PreviewEffect") << effectType);
+    qCInfo(memePlugin) << "Applied wallpaper:" << path;
 }
 
 DCC_FACTORY_CLASS(MemePlugin)

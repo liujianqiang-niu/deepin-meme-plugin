@@ -6,37 +6,25 @@
             "value": false,
             "serial": 0,
             "flags": [],
-            "name": "enable meme wallpaper effects",
-            "name[zh_CN]": "启用趣味壁纸特效",
-            "description": "Whether meme wallpaper effects are enabled",
-            "description[zh_CN]": "是否启用趣味壁纸特效",
+            "name": "enable dynamic wallpaper",
+            "name[zh_CN]": "启用动态壁纸",
+            "description": "Whether dynamic wallpaper is enabled",
+            "description[zh_CN]": "是否启用动态壁纸",
             "permissions": "readwrite",
             "visibility": "public",
             "type": "bool"
         },
-        "currentTheme": {
-            "value": "example",
+        "currentVideo": {
+            "value": "",
             "serial": 0,
             "flags": [],
-            "name": "current meme theme id",
-            "name[zh_CN]": "当前特效主题",
-            "description": "Current meme theme id",
-            "description[zh_CN]": "当前特效主题标识",
+            "name": "current video wallpaper path",
+            "name[zh_CN]": "当前动态壁纸路径",
+            "description": "Absolute path to the current video wallpaper file",
+            "description[zh_CN]": "当前动态壁纸视频文件绝对路径",
             "permissions": "readwrite",
             "visibility": "public",
             "type": "string"
-        },
-        "effectVolume": {
-            "value": 80,
-            "serial": 0,
-            "flags": [],
-            "name": "effect audio volume",
-            "name[zh_CN]": "音效音量",
-            "description": "Effect audio volume (0-100)",
-            "description[zh_CN]": "音效音量 (0-100)",
-            "permissions": "readwrite",
-            "visibility": "public",
-            "type": "int"
         }
     }
 }

@@ -1,65 +1,58 @@
 // SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
 // SPDX-License-Identifier: GPL-3.0-or-later
-// 桌面特效守护进程入口
-
-#include "effectoverlay.h"
-#include "fileoperationmonitor.h"
-#include "themeresolver.h"
-#include "effectplayer.h"
-#include "wallpapermanager.h"
+#include "wallpaperplayer.h"
+#include "memedconfig.h"
 
 #include <QApplication>
 #include <QDBusConnection>
-#include <QDBusError>
 #include <QLoggingCategory>
 
 Q_LOGGING_CATEGORY(memeDaemon, "meme.daemon")
+
+static const char *kDBusService = "org.deepin.meme.daemon";
+static const char *kDBusPath = "/org/deepin/meme/daemon";
+static const char *kDBusInterface = "org.deepin.meme.daemon";
+
+class MemeDaemon : public QObject
+{
+    Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface", "org.deepin.meme.daemon")
+public:
+    explicit MemeDaemon(WallpaperPlayer *player, QObject *parent = nullptr)
+        : QObject(parent), m_player(player)
+    {
+        meme::MemeDConfig cfg;
+        if (cfg.isValid() && cfg.enabled()) {
+            m_player->setVideo(cfg.currentVideo());
+        }
+    }
+
+public Q_SLOTS:
+    void SetWallpaper(const QString &path) { m_player->setVideo(path); }
+    void Stop() { m_player->stop(); }
+
+private:
+    WallpaperPlayer *m_player;
+};
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     app.setApplicationName("deepin-meme-daemon");
-    app.setOrganizationName("deepin");
-    app.setApplicationDisplayName("Deepin Meme Daemon");
 
-    qCInfo(memeDaemon) << "Deepin Meme Daemon starting...";
+    qCInfo(memeDaemon) << "Starting...";
 
-    // 1. 主题解析器
-    meme::ThemeResolver themeResolver;
-    themeResolver.scanThemes();
-    if (themeResolver.availableThemes().isEmpty()) {
-        qCWarning(memeDaemon) << "No meme themes found, daemon will run idle.";
-    }
+    WallpaperPlayer player;
 
-    // 2. 特效播放器
-    EffectPlayer effectPlayer(&themeResolver);
+    MemeDaemon daemon(&player);
 
-    // 2.5 动态壁纸管理器
-    WallpaperManager wallpaperManager(&themeResolver);
-
-    // 3. 特效叠加层
-    EffectOverlay overlay(&effectPlayer, &wallpaperManager);
-
-    // 4. 文件操作监听器
-    FileOperationMonitor monitor;
-    QObject::connect(&monitor, &FileOperationMonitor::fileOperationDetected,
-        &overlay, [&overlay](const QString &operationType, const QString &filePath) {
-            overlay.triggerEffect(operationType, filePath);
-        });
-
-    monitor.start();
-
-    // 5. 注册 D-Bus 服务
     auto bus = QDBusConnection::sessionBus();
-    if (!bus.registerService("org.deepin.meme.daemon")) {
-        qCWarning(memeDaemon) << "Failed to register D-Bus service:" << bus.lastError().message();
-    }
-    if (!bus.registerObject("/org/deepin/meme/daemon", &overlay,
-            QDBusConnection::ExportAllSlots)) {
-        qCWarning(memeDaemon) << "Failed to register D-Bus object:" << bus.lastError().message();
-    }
+    bus.registerService(kDBusService);
+    bus.registerObject(kDBusPath, &daemon, QDBusConnection::ExportAllSlots);
 
-    qCInfo(memeDaemon) << "Deepin Meme Daemon started.";
+    qCInfo(memeDaemon) << "Started.";
 
     return app.exec();
 }
+
+#include "main.moc"

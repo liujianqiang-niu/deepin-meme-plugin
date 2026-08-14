@@ -4,11 +4,10 @@
 #define MEMEDCONFIG_H
 
 #include <QObject>
-#include <QVariant>
+#include <QString>
 
 namespace meme {
 
-// DConfig 持久化封装,基于 DTK6 DConfig
 class MemeDConfig : public QObject
 {
     Q_OBJECT
@@ -21,17 +20,13 @@ public:
     bool enabled() const;
     void setEnabled(bool e);
 
-    QString currentTheme() const;
-    void setCurrentTheme(const QString &id);
-
-    int effectVolume() const;
-    void setEffectVolume(int vol);
+    QString currentVideo() const;
+    void setCurrentVideo(const QString &path);
 
 signals:
     void changed(const QString &key);
 
 private:
-    // DConfig* 实际类型,定义为 void* 以避免头文件中暴露 dconfig.h
     void *m_dconfig = nullptr;
 };
 

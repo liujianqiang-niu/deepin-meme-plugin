@@ -1,3 +1,10 @@
+deepin-meme-plugin (1.0.0-3) unstable; urgency=medium
+
+  * Fix: move QML files from qml/ subdir to root (match accounts structure)
+  * This is the critical fix - qmldir paths now Meme.qml not qml/Meme.qml
+
+ -- Deepin Desktop Environment Team <uos@uniontech.com>  Fri, 14 Aug 2026 20:00:00 +0800
+
 deepin-meme-plugin (1.0.0-2) unstable; urgency=medium
 
   * Fix: link libdde-control-center.so for DccFactory symbol

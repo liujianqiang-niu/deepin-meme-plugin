@@ -5,6 +5,7 @@
 
 #include <QObject>
 #include <QStringList>
+#include <QVariantList>
 
 namespace meme {
 class MemeThemeManager;
@@ -17,6 +18,7 @@ class MemePlugin : public QObject
     Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
     Q_PROPERTY(QString currentTheme READ currentTheme WRITE setCurrentTheme NOTIFY currentThemeChanged)
     Q_PROPERTY(QStringList themeList READ themeList NOTIFY themeListChanged)
+    Q_PROPERTY(QVariantList themeModel READ themeModel NOTIFY themeListChanged)
     Q_PROPERTY(int effectVolume READ effectVolume WRITE setEffectVolume NOTIFY effectVolumeChanged)
 
 public:
@@ -30,11 +32,15 @@ public:
     void setCurrentTheme(const QString &id);
 
     QStringList themeList() const;
+    QVariantList themeModel() const;
     int effectVolume() const;
     void setEffectVolume(int vol);
 
     // QML 可调用: 返回主题的预览壁纸视频 URL
     Q_INVOKABLE QString previewVideoUrl(const QString &themeId) const;
+
+    // QML 可调用: 返回主题指定特效的视频 URL
+    Q_INVOKABLE QString effectVideoUrl(const QString &themeId, const QString &effectType) const;
 
     // QML 可调用: 预览指定类型的特效
     Q_INVOKABLE void previewEffect(const QString &effectType);

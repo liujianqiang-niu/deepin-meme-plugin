@@ -88,6 +88,20 @@ QStringList MemePlugin::themeList() const
     return m_themeManager->availableThemes();
 }
 
+QVariantList MemePlugin::themeModel() const
+{
+    QVariantList model;
+    for (const QString &id : m_themeManager->availableThemes()) {
+        auto m = m_themeManager->manifest(id);
+        if (!m) continue;
+        QVariantMap entry;
+        entry[QStringLiteral("id")] = id;
+        entry[QStringLiteral("name")] = m->name;
+        model.append(entry);
+    }
+    return model;
+}
+
 int MemePlugin::effectVolume() const { return m_effectVolume; }
 
 void MemePlugin::setEffectVolume(int vol)
@@ -107,6 +121,18 @@ QString MemePlugin::previewVideoUrl(const QString &themeId) const
     if (!manifest) return {};
     const QString themeDir = m_themeManager->themeDirectory(themeId);
     return meme::resolvePath(themeDir, manifest->wallpaperPath);
+}
+
+QString MemePlugin::effectVideoUrl(const QString &themeId, const QString &effectType) const
+{
+    auto typeOpt = meme::stringToEffectType(effectType);
+    if (!typeOpt) return {};
+    auto manifest = m_themeManager->manifest(themeId);
+    if (!manifest) return {};
+    auto it = manifest->effects.find(*typeOpt);
+    if (it == manifest->effects.end()) return {};
+    const QString themeDir = m_themeManager->themeDirectory(themeId);
+    return meme::resolvePath(themeDir, it->videoPath);
 }
 
 void MemePlugin::previewEffect(const QString &effectType)

@@ -5,9 +5,7 @@ import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Controls 2.15
 
-// 主页面: 可以使用 dccData（C++ 后端）
 DccObject {
-    // 开关: 是否启用趣味壁纸特效
     DccObject {
         name: "memeEnabled"
         parentName: "meme"
@@ -17,13 +15,10 @@ DccObject {
         backgroundType: DccObject.Normal
         page: Switch {
             checked: dccData.enabled
-            onCheckedChanged: {
-                dccData.enabled = checked
-            }
+            onCheckedChanged: dccData.enabled = checked
         }
     }
 
-    // 主题包选择
     DccObject {
         name: "memeTheme"
         parentName: "meme"
@@ -32,36 +27,40 @@ DccObject {
         pageType: DccObject.Editor
         backgroundType: DccObject.Normal
         page: ComboBox {
-            model: dccData.themeList
+            model: dccData.themeModel
+            textRole: "name"
+            valueRole: "id"
             currentIndex: {
-                const idx = dccData.themeList.indexOf(dccData.currentTheme)
-                return idx >= 0 ? idx : 0
+                for (var i = 0; i < dccData.themeModel.length; i++) {
+                    if (dccData.themeModel[i].id === dccData.currentTheme)
+                        return i
+                }
+                return 0
             }
-            onActivated: {
-                dccData.currentTheme = currentText
-            }
+            onActivated: dccData.currentTheme = currentValue
         }
     }
 
-    // 实时预览窗口
     DccObject {
         name: "memePreview"
         parentName: "meme"
-        displayName: qsTr("预览")
+        displayName: qsTr("效果预览")
         weight: 30
         pageType: DccObject.Item
         backgroundType: DccObject.Normal
         page: MemePreview {
+            id: memePreview
             themeId: dccData.currentTheme
             enabled: dccData.enabled
-            // 预览演示特效
+            wallpaperUrl: dccData.enabled ? dccData.previewVideoUrl(dccData.currentTheme) : ""
             onPreviewEffectRequested: (effectType) => {
+                var url = dccData.effectVideoUrl(dccData.currentTheme, effectType)
+                memePreview.playEffect(url)
                 dccData.previewEffect(effectType)
             }
         }
     }
 
-    // 高级设置
     DccObject {
         name: "memeSettings"
         parentName: "meme"
@@ -69,12 +68,24 @@ DccObject {
         weight: 40
         pageType: DccObject.Editor
         backgroundType: DccObject.Normal
-        page: Slider {
-            from: 0
-            to: 100
-            value: dccData.effectVolume
-            onMoved: {
-                dccData.effectVolume = value
+        page: ColumnLayout {
+            spacing: 6
+            Label {
+                text: qsTr("音效音量：调节特效播放时的音量大小")
+                font.pixelSize: 12
+                color: "#888"
+                Layout.fillWidth: true
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Label { text: qsTr("静音"); font.pixelSize: 11; color: "#aaa" }
+                Slider {
+                    Layout.fillWidth: true
+                    from: 0; to: 100
+                    value: dccData.effectVolume
+                    onMoved: dccData.effectVolume = value
+                }
+                Label { text: qsTr("最大"); font.pixelSize: 11; color: "#aaa" }
             }
         }
     }

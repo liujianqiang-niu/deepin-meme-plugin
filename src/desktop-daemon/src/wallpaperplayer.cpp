@@ -35,7 +35,11 @@ void WallpaperPlayer::ensureView()
     m_view->show();
     applyGeometry();
 
-    QTimer::singleShot(100, this, [this]() { applyGeometry(); });
+    QTimer::singleShot(100, this, [this]() {
+        applyGeometry();
+        m_view->raise();
+        m_view->requestUpdate();
+    });
     QTimer::singleShot(500, this, [this]() { applyGeometry(); });
 
     connect(m_view, &QQuickView::widthChanged, this, [this](int w) {

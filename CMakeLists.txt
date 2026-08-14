@@ -39,9 +39,18 @@ install(DIRECTORY data/themes/example data/themes/scifi-hero data/themes/pixel-m
     DESTINATION ${MEME_THEME_DIR}
     PATTERN "manifest.schema.json" EXCLUDE)
 
-# DConfig schema: 安装到 /usr/share/dsg/configs/org.deepin.meme/
-include(/usr/lib/x86_64-linux-gnu/cmake/Dtk6Tools/DtkDConfigMacros.cmake)
+# DConfig schema: dtk_add_config_meta_files 由 find_package(Dtk6DConfig) 自动导入
 dtk_add_config_meta_files(APPID org.deepin.meme FILES data/configs/org.deepin.meme.json)
+
+# 国际化: lupdate 提取 -> lrelease 编译 .qm
+qt_add_lupdate(LTS_FILES
+    SOURCE_TARGETS meme_qml
+    TS_FILES translations/deepin-meme-plugin_zh_CN.ts)
+qt_add_lrelease(QM_FILES
+    TS_FILES translations/deepin-meme-plugin_zh_CN.ts)
+
+install(FILES ${QM_FILES}
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/deepin-meme-plugin/translations)
 
 install(FILES data/dbus/org.deepin.meme.daemon.service
     DESTINATION /usr/share/dbus-1/services)

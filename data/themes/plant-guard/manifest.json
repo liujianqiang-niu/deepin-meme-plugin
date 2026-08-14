@@ -4,7 +4,7 @@
   "description": "植物守卫发射弹球击碎文件，删除文件时绿色弹射精准命中",
   "version": "1.0.0",
   "author": "Deepin Meme Team",
-  "wallpaper": "wallpaper.mp4",
+  "wallpaper": "wallpaper.jpg",
   "thumbnail": "wallpaper.thumbnail.jpg",
   "effects": {
     "delete": { "video": "effects/delete.webm", "audio": "effects/delete.wav", "anchor": "target", "scale": 1.2, "duration": 3000 },

@@ -4,7 +4,7 @@
   "description": "文件在烟花中绽放消散，删除文件时红色烟花爆炸庆祝",
   "version": "1.0.0",
   "author": "Deepin Meme Team",
-  "wallpaper": "wallpaper.mp4",
+  "wallpaper": "wallpaper.jpg",
   "thumbnail": "wallpaper.thumbnail.jpg",
   "effects": {
     "delete": { "video": "effects/delete.webm", "audio": "effects/delete.wav", "anchor": "target", "scale": 1.4, "duration": 3500 },

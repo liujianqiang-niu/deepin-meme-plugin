@@ -4,7 +4,7 @@
   "description": "文件化为星尘消散于宇宙，删除文件时紫色星辰旋涡扩散",
   "version": "1.0.0",
   "author": "Deepin Meme Team",
-  "wallpaper": "wallpaper.mp4",
+  "wallpaper": "wallpaper.jpg",
   "thumbnail": "wallpaper.thumbnail.jpg",
   "effects": {
     "delete": { "video": "effects/delete.webm", "audio": "effects/delete.wav", "anchor": "target", "scale": 1.3, "duration": 3000 },

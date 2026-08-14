@@ -4,7 +4,7 @@
   "description": "英雄从天而降发射激光摧毁文件，删除文件时激光精准打击",
   "version": "1.0.0",
   "author": "Deepin Meme Team",
-  "wallpaper": "wallpaper.mp4",
+  "wallpaper": "wallpaper.jpg",
   "thumbnail": "wallpaper.thumbnail.jpg",
   "effects": {
     "delete": { "video": "effects/delete.webm", "audio": "effects/delete.wav", "anchor": "target", "scale": 1.5, "duration": 3000 },

@@ -46,7 +46,9 @@ qt_add_qml_module(meme_qml
 )
 
 # --- C++ 后端 .so (通过 QPluginLoader 加载) ---
+# 控制中心 DccPluginLoader 按 {name}.so 匹配,不能有 lib 前缀
 add_library(${PLUGIN_NAME} MODULE ${PLUGIN_SRCS})
+set_target_properties(${PLUGIN_NAME} PROPERTIES PREFIX "")
 
 target_link_libraries(${PLUGIN_NAME} PRIVATE
     meme-common

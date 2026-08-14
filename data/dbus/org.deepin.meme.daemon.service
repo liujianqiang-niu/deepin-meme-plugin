@@ -1,3 +1,4 @@
 [D-Bus Service]
 Name=org.deepin.meme.daemon
 Exec=/usr/bin/deepin-meme-daemon
+SystemdService=deepin-meme-daemon.service

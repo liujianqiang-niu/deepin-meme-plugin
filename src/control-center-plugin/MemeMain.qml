@@ -90,7 +90,7 @@ DccObject {
                         Button {
                             text: qsTr("预览")
                             onClicked: {
-                                previewVideo.source = "file://" + modelData.path
+                                previewVideo.source = dccData.urlFromPath(modelData.path)
                                 previewVideo.visible = true
                                 previewVideo.play()
                             }

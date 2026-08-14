@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QStringList>
 #include <QVariantList>
+#include <QUrl>
 
 struct WallpaperEntry {
     QString name;
@@ -32,6 +33,7 @@ public:
     QVariantList wallpaperModel() const;
 
     Q_INVOKABLE void applyWallpaper(const QString &path);
+    Q_INVOKABLE QUrl urlFromPath(const QString &path) const;
 
 signals:
     void enabledChanged(bool);

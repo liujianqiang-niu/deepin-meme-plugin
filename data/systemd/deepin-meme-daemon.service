@@ -1,10 +1,11 @@
 [Unit]
-Description=Deepin Meme Wallpaper Effect Daemon
+Description=Deepin Dynamic Wallpaper Daemon
 After=graphical-session.target
 PartOf=graphical-session.target
 
 [Service]
-Type=simple
+Type=dbus
+BusName=org.deepin.meme.daemon
 ExecStart=/usr/bin/deepin-meme-daemon
 Restart=on-failure
 RestartSec=5

@@ -6,6 +6,8 @@
 #include <QApplication>
 #include <QDBusConnection>
 #include <QLoggingCategory>
+#include <QProcessEnvironment>
+#include <cstdlib>
 
 Q_LOGGING_CATEGORY(memeDaemon, "meme.daemon")
 
@@ -37,6 +39,12 @@ private:
 
 int main(int argc, char *argv[])
 {
+    // D-Bus 激活时可能没有 DISPLAY 环境变量,导致 QApplication 无法连接 X11。
+    // 从 systemd 或 session 环境中继承。
+    if (std::getenv("DISPLAY") == nullptr) {
+        qputenv("DISPLAY", ":0");
+    }
+
     QApplication app(argc, argv);
     app.setApplicationName("deepin-meme-daemon");
 

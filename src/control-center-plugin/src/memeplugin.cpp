@@ -8,6 +8,8 @@
 #include <QDir>
 #include <QDBusConnection>
 #include <QDBusMessage>
+#include <QDBusPendingCall>
+#include <QUrl>
 #include <QStandardPaths>
 #include <QLoggingCategory>
 
@@ -56,7 +58,7 @@ void MemePlugin::setEnabled(bool e)
         cfg.setEnabled(e);
 
         if (!e) {
-            QDBusConnection::sessionBus().call(QDBusMessage::createMethodCall(
+            QDBusConnection::sessionBus().asyncCall(QDBusMessage::createMethodCall(
                 "org.deepin.meme.daemon", "/org/deepin/meme/daemon",
                 "org.deepin.meme.daemon", "Stop"));
         } else if (!m_currentVideo.isEmpty()) {
@@ -101,11 +103,16 @@ void MemePlugin::applyWallpaper(const QString &path)
         emit enabledChanged(true);
     }
 
-    QDBusConnection::sessionBus().call(QDBusMessage::createMethodCall(
+    QDBusConnection::sessionBus().asyncCall(QDBusMessage::createMethodCall(
         "org.deepin.meme.daemon", "/org/deepin/meme/daemon",
         "org.deepin.meme.daemon", "SetWallpaper") << path);
 
     qCInfo(memePlugin) << "Applied wallpaper:" << path;
+}
+
+QUrl MemePlugin::urlFromPath(const QString &path) const
+{
+    return QUrl::fromLocalFile(path);
 }
 
 DCC_FACTORY_CLASS(MemePlugin)

@@ -4,10 +4,8 @@
 #include "themeresolver.h"
 #include "thememanifest.h"
 
-#include <QDBusConnection>
-#include <QDBusInterface>
-#include <QDBusReply>
 #include <QFile>
+#include <QProcess>
 #include <QLoggingCategory>
 
 Q_LOGGING_CATEGORY(memeWallpaper, "meme.wallpaper")
@@ -52,15 +50,16 @@ void WallpaperManager::enable()
     }
 
     // 保存当前壁纸,以便禁用时恢复
-    QDBusInterface iface("org.deepin.dde.Appearance1",
-                         "/org/deepin/dde/Appearance1",
-                         "org.deepin.dde.Appearance1",
-                         QDBusConnection::sessionBus());
-    if (iface.isValid()) {
-        QDBusReply<QString> bgReply = iface.call("GetCurrentWorkspaceBackground");
-        if (bgReply.isValid()) {
-            m_previousWallpaper = bgReply.value();
-        }
+    QProcess getter;
+    getter.start("gsettings", {"get", "com.deepin.dde.appearance", "background-uris"});
+    getter.waitForFinished(3000);
+    QString output = QString::fromUtf8(getter.readAllStandardOutput()).trimmed();
+    // gsettings 返回格式: "['file:///path/to/wallpaper.jpg']"
+    // 提取第一个 URI
+    int start = output.indexOf("'");
+    int end = output.indexOf("'", start + 1);
+    if (start >= 0 && end > start) {
+        m_previousWallpaper = output.mid(start + 1, end - start - 1);
     }
 
     if (setWallpaperViaDBus(imagePath)) {
@@ -83,21 +82,20 @@ void WallpaperManager::disable()
 
 bool WallpaperManager::setWallpaperViaDBus(const QString &imagePath)
 {
-    QDBusInterface iface("org.deepin.dde.Appearance1",
-                         "/org/deepin/dde/Appearance1",
-                         "org.deepin.dde.Appearance1",
-                         QDBusConnection::sessionBus());
-    if (!iface.isValid()) {
-        qCWarning(memeWallpaper) << "Appearance1 D-Bus unavailable";
+    // v25 系统上 Appearance1 D-Bus Set/SetCurrentWorkspaceBackground 不生效,
+    // 实际壁纸由 dde-shell 读取 gsettings com.deepin.dde.appearance background-uris 渲染。
+    const QString uri = "file://" + imagePath;
+    const QString gvariantValue = "['" + uri + "']";
+
+    int ret = QProcess::execute("gsettings", {
+        "set", "com.deepin.dde.appearance", "background-uris", gvariantValue
+    });
+
+    if (ret != 0) {
+        qCWarning(memeWallpaper) << "gsettings set background-uris failed, ret:" << ret;
         return false;
     }
 
-    const QString url = "file://" + imagePath;
-
-    QDBusReply<void> reply = iface.call("SetCurrentWorkspaceBackground", url);
-    if (!reply.isValid()) {
-        qCWarning(memeWallpaper) << "SetCurrentWorkspaceBackground failed:" << reply.error().message();
-        return false;
-    }
+    qCInfo(memeWallpaper) << "Wallpaper set via gsettings:" << uri;
     return true;
 }

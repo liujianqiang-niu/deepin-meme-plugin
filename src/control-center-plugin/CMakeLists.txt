@@ -36,7 +36,7 @@ qt_policy(SET QTP0001 NEW)
 qt_policy(SET QTP0004 NEW)
 cmake_policy(SET CMP0071 NEW)
 
-set(plugin_dirs ${PROJECT_BINARY_DIR}/lib/meme/)
+set(plugin_dirs ${PROJECT_BINARY_DIR}/lib/meme)
 qt_add_qml_module(meme_qml
     PLUGIN_TARGET meme_qml
     URI "meme"
@@ -69,7 +69,7 @@ install(TARGETS ${PLUGIN_NAME}
     LIBRARY DESTINATION ${DCC_PLUGIN_DIR}/${PLUGIN_NAME}
 )
 
-# 安装 QML 模块到插件目录
+# 安装 QML 模块到插件目录(整个 meme/ 目录复制到 plugins_v1.1/meme/)
 install(DIRECTORY ${plugin_dirs}
     DESTINATION ${DCC_PLUGIN_DIR}
 )

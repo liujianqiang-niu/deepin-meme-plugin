@@ -22,14 +22,17 @@ set(PLUGIN_SRCS
 )
 
 # --- QML 文件 ---
+# 设置 QT_RESOURCE_ALIAS 去掉 qml/ 前缀,使 qmldir 中路径为 Meme.qml 而非 qml/Meme.qml
+# 与 accounts/personalization 等已安装插件保持一致(QML 文件在资源根路径)
 set(QML_FILES
     qml/Meme.qml
     qml/MemeMain.qml
     qml/MemePreview.qml
 )
 
-# QML 文件不需要手动设置 QT_RESOURCE_ALIAS
-# qt_add_qml_module 会自动处理路径
+set_source_files_properties(qml/Meme.qml       PROPERTIES QT_RESOURCE_ALIAS "Meme.qml")
+set_source_files_properties(qml/MemeMain.qml   PROPERTIES QT_RESOURCE_ALIAS "MemeMain.qml")
+set_source_files_properties(qml/MemePreview.qml PROPERTIES QT_RESOURCE_ALIAS "MemePreview.qml")
 
 # --- QML 模块 (生成 libmeme_qml.so) ---
 qt_policy(SET QTP0001 NEW)

@@ -26,18 +26,31 @@ DccObject {
         weight: 20
         pageType: DccObject.Editor
         backgroundType: DccObject.Normal
-        page: ComboBox {
-            model: dccData.themeModel
-            textRole: "name"
-            valueRole: "id"
-            currentIndex: {
-                for (var i = 0; i < dccData.themeModel.length; i++) {
-                    if (dccData.themeModel[i].id === dccData.currentTheme)
-                        return i
+        page: RowLayout {
+            spacing: 8
+            ComboBox {
+                id: themeCombo
+                Layout.fillWidth: true
+                model: dccData.themeModel
+                textRole: "name"
+                valueRole: "id"
+                currentIndex: {
+                    for (var i = 0; i < dccData.themeModel.length; i++) {
+                        if (dccData.themeModel[i].id === dccData.currentTheme)
+                            return i
+                    }
+                    return 0
                 }
-                return 0
+                property string selectedTheme: dccData.currentTheme
+                onActivated: selectedTheme = currentValue
             }
-            onActivated: dccData.currentTheme = currentValue
+            Button {
+                text: qsTr("应用")
+                enabled: themeCombo.selectedTheme !== "" && themeCombo.selectedTheme !== dccData.currentTheme
+                onClicked: {
+                    dccData.currentTheme = themeCombo.selectedTheme
+                }
+            }
         }
     }
 

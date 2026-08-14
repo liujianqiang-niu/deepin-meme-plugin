@@ -14,7 +14,7 @@ Rectangle {
 
     function playEffect(url) {
         if (!url || url === "") return
-        effectVideo.source = Qt.resolvedUrl(url)
+        effectVideo.source = "file://" + url
         effectVideo.visible = true
         effectVideo.play()
     }
@@ -39,7 +39,7 @@ Rectangle {
             id: wallpaperImage
             anchors.fill: parent
             source: previewRoot.enabled && previewRoot.wallpaperUrl !== ""
-                    ? Qt.resolvedUrl(previewRoot.wallpaperUrl) : ""
+                    ? "file://" + previewRoot.wallpaperUrl : ""
             fillMode: Image.PreserveAspectCrop
             visible: previewRoot.enabled && previewRoot.wallpaperUrl !== ""
         }

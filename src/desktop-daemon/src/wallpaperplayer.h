@@ -5,10 +5,7 @@
 
 #include <QObject>
 #include <QString>
-#include <QWindow>
 
-class QMediaPlayer;
-class QVideoSink;
 class QQuickView;
 
 class WallpaperPlayer : public QObject
@@ -23,10 +20,6 @@ public:
 
 private:
     QQuickView *m_view = nullptr;
-    QMediaPlayer *m_player = nullptr;
-    QVideoSink *m_sink = nullptr;
-    QString m_pendingPath;
-    bool m_geometrySet = false;
 
     void ensureView();
     void applyGeometry();

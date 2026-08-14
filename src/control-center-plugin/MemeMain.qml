@@ -21,7 +21,7 @@ DccObject {
     }
 
     DccObject {
-        name: "memeWallpaperList"
+        name: "memeWallpaper"
         parentName: "meme"
         displayName: qsTr("动态壁纸")
         weight: 20
@@ -30,6 +30,33 @@ DccObject {
         page: ColumnLayout {
             spacing: 8
             Layout.fillWidth: true
+
+            Rectangle {
+                id: previewContainer
+                Layout.fillWidth: true
+                Layout.preferredHeight: 220
+                color: "#000"
+                clip: true
+                radius: 6
+
+                Video {
+                    id: previewVideo
+                    anchors.fill: parent
+                    fillMode: VideoOutput.PreserveAspectFit
+                    visible: false
+                    muted: true
+                    loops: MediaPlayer.Infinite
+                    onStopped: visible = false
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: qsTr("点击预览按钮查看效果")
+                    color: "#666"
+                    font.pixelSize: 14
+                    visible: !previewVideo.visible
+                }
+            }
 
             ListView {
                 id: wallpaperList
@@ -41,7 +68,7 @@ DccObject {
 
                 delegate: Rectangle {
                     width: wallpaperList.width
-                    height: 60
+                    height: 56
                     radius: 6
                     color: modelData.path === dccData.currentVideo ? "#2b5d8a" : "#1e2a3a"
                     border.color: modelData.path === dccData.currentVideo ? "#4a90d9" : "#333"
@@ -76,40 +103,6 @@ DccObject {
                         }
                     }
                 }
-            }
-        }
-    }
-
-    DccObject {
-        name: "memePreview"
-        parentName: "meme"
-        displayName: qsTr("预览")
-        weight: 30
-        pageType: DccObject.Item
-        backgroundType: DccObject.Normal
-        page: Rectangle {
-            id: previewContainer
-            color: "#000"
-            implicitHeight: 240
-            implicitWidth: 480
-            clip: true
-
-            Video {
-                id: previewVideo
-                anchors.fill: parent
-                fillMode: VideoOutput.PreserveAspectFit
-                visible: false
-                muted: true
-                loops: MediaPlayer.Infinite
-                onStopped: visible = false
-            }
-
-            Text {
-                anchors.centerIn: parent
-                text: qsTr("点击预览按钮查看效果")
-                color: "#666"
-                font.pixelSize: 14
-                visible: !previewVideo.visible
             }
         }
     }

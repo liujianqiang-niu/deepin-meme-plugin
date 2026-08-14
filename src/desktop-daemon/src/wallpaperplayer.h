@@ -1,14 +1,15 @@
 // SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
 // SPDX-License-Identifier: GPL-3.0-or-later
-#ifndef WALLpaperPLAYER_H
+#ifndef WALLPAPERPLAYER_H
 #define WALLPAPERPLAYER_H
 
 #include <QObject>
 #include <QString>
+#include <QWindow>
 
 class QMediaPlayer;
-class QVideoWidget;
-class QWidget;
+class QVideoSink;
+class QQuickView;
 
 class WallpaperPlayer : public QObject
 {
@@ -21,9 +22,14 @@ public:
     void stop();
 
 private:
-    QWidget *m_window = nullptr;
-    QVideoWidget *m_videoWidget = nullptr;
+    QQuickView *m_view = nullptr;
     QMediaPlayer *m_player = nullptr;
+    QVideoSink *m_sink = nullptr;
+    QString m_pendingPath;
+    bool m_geometrySet = false;
+
+    void ensureView();
+    void applyGeometry();
 };
 
 #endif // WALLPAPERPLAYER_H

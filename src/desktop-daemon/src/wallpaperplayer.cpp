@@ -6,8 +6,11 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include <QMediaPlayer>
-#include <QVideoWidget>
-#include <QWidget>
+#include <QVideoSink>
+#include <QQuickView>
+#include <QQuickItem>
+#include <QQmlEngine>
+#include <QQmlContext>
 #include <QFile>
 #include <QTimer>
 #include <QLoggingCategory>
@@ -17,14 +20,7 @@ Q_LOGGING_CATEGORY(memeWallpaper, "meme.wallpaper")
 WallpaperPlayer::WallpaperPlayer(QObject *parent)
     : QObject(parent)
 {
-    m_window = new QWidget();
-    m_window->setWindowFlags(Qt::FramelessWindowHint | Qt::Window);
-    m_window->setAttribute(Qt::WA_TranslucentBackground);
-    m_window->setAttribute(Qt::WA_ShowWithoutActivating);
-
-    m_videoWidget = new QVideoWidget(m_window);
     m_player = new QMediaPlayer(this);
-    m_player->setVideoOutput(m_videoWidget);
     m_player->setAudioOutput(nullptr);
 
     connect(m_player, &QMediaPlayer::playbackStateChanged, this,
@@ -38,7 +34,57 @@ WallpaperPlayer::WallpaperPlayer(QObject *parent)
 WallpaperPlayer::~WallpaperPlayer()
 {
     if (m_player) m_player->stop();
-    delete m_window;
+    delete m_view;
+}
+
+void WallpaperPlayer::ensureView()
+{
+    if (m_view) return;
+
+    m_view = new QQuickView();
+    m_view->setFlag(Qt::FramelessWindowHint);
+    m_view->setColor(Qt::black);
+
+    // 用 QML 渲染视频帧
+    m_view->setSource(QUrl(QStringLiteral("qrc:/meme/wallpaper.qml")));
+
+    m_sink = new QVideoSink(this);
+    m_player->setVideoSink(m_sink);
+
+    // 把 VideoSink 的 videoFrame 传给 QML 的 Image
+    auto *root = m_view->rootObject();
+    if (root) {
+        root->setProperty("videoSink", QVariant::fromValue(m_sink));
+    }
+
+    m_view->show();
+    applyGeometry();
+
+    // show 后立即再设一次大小,并持续监听 resize 事件
+    QTimer::singleShot(100, this, [this]() { applyGeometry(); });
+    QTimer::singleShot(500, this, [this]() { applyGeometry(); });
+
+    connect(m_view, &QQuickView::widthChanged, this, [this](int w) {
+        if (w <= 1) applyGeometry();
+    });
+    connect(m_view, &QQuickView::heightChanged, this, [this](int h) {
+        if (h <= 1) applyGeometry();
+    });
+}
+
+void WallpaperPlayer::applyGeometry()
+{
+    if (!m_view) return;
+
+    QRect geo;
+    QScreen *screen = QGuiApplication::primaryScreen();
+    if (screen) geo = screen->geometry();
+    if (geo.isEmpty()) geo = QRect(0, 0, 1920, 1080);
+
+    if (m_view->geometry() != geo) {
+        m_view->setGeometry(geo);
+        qCInfo(memeWallpaper) << "Applied geometry:" << geo;
+    }
 }
 
 void WallpaperPlayer::setVideo(const QString &path)
@@ -48,28 +94,11 @@ void WallpaperPlayer::setVideo(const QString &path)
         return;
     }
 
-    QRect geo;
-    QScreen *screen = QGuiApplication::primaryScreen();
-    if (screen) geo = screen->geometry();
-    if (geo.isEmpty()) geo = QRect(0, 0, 1920, 1080);
-
-    m_window->setGeometry(geo);
-    m_videoWidget->setGeometry(0, 0, geo.width(), geo.height());
-    qCInfo(memeWallpaper) << "Window geometry:" << geo;
+    ensureView();
+    applyGeometry();
 
     m_player->setSource(QUrl::fromLocalFile(path));
-    m_window->show();
     m_player->play();
-
-    // 延迟再设一次几何,以防 show 后窗口被 WM 改了大小
-    QTimer::singleShot(500, this, [this, geo]() {
-        QRect cur = m_window->geometry();
-        if (cur.width() <= 1 || cur.height() <= 1) {
-            m_window->setGeometry(geo);
-            m_videoWidget->setGeometry(0, 0, geo.width(), geo.height());
-            qCInfo(memeWallpaper) << "Re-applied geometry:" << geo;
-        }
-    });
 
     qCInfo(memeWallpaper) << "Playing video wallpaper:" << path;
 }
@@ -77,5 +106,5 @@ void WallpaperPlayer::setVideo(const QString &path)
 void WallpaperPlayer::stop()
 {
     m_player->stop();
-    m_window->hide();
+    if (m_view) m_view->hide();
 }

@@ -5,9 +5,13 @@ cmake-build-*/
 out/
 
 # Debian build artifacts
-debian/*.debhelper.log
+debian/.debhelper/
 debian/files
+debian/*.debhelper.log
 debian/*.substvars
+debian/deepin-meme-plugin/
+debian/deepin-meme-plugin-data/
+debian/tmp/
 ../deepin-meme-plugin_*.buildinfo
 ../deepin-meme-plugin_*.changes
 ../deepin-meme-plugin_*.deb

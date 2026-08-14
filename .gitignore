@@ -1,0 +1,32 @@
+# Build
+build/
+cmake-build-*/
+out/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CMakeLists.txt.user
+
+# Superpowers/brainstorm
+.superpowers/
+
+# Codegraph
+.codegraph/
+
+# Omo
+.omo/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Binary/video cache
+*.tmp

@@ -1,0 +1,22 @@
+{
+  "name": "meme",
+  "owner": "org.deepin.meme",
+  "version": "1.0.0",
+  "items": {
+    "enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether meme wallpaper effects are enabled"
+    },
+    "currentTheme": {
+      "type": "string",
+      "default": "example",
+      "description": "Current meme theme id"
+    },
+    "effectVolume": {
+      "type": "integer",
+      "default": 80,
+      "description": "Effect audio volume (0-100)"
+    }
+  }
+}

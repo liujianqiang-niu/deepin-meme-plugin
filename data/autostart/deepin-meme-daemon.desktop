@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Deepin Meme Daemon
+Name[zh_CN]=Deepin 趣味壁纸守护进程
+Comment=Dynamic wallpaper effect daemon for Deepin desktop
+Comment[zh_CN]=Deepin 桌面动态壁纸特效守护进程
+Exec=/usr/bin/deepin-meme-daemon
+Icon=meme_icon
+Terminal=false
+X-GNOME-Autostart-enabled=true
+NoDisplay=true
+OnlyShowIn=Deepin
+Categories=System;

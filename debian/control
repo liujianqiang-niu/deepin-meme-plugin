@@ -1,0 +1,53 @@
+Source: deepin-meme-plugin
+Section: x11
+Priority: optional
+Maintainer: Deepin Desktop Environment Team <uos@uniontech.com>
+Build-Depends: debhelper-compat (= 13),
+    cmake (>= 3.23),
+    qt6-base-dev (>= 6.8),
+    qt6-declarative-dev (>= 6.8),
+    qt6-multimedia-dev (>= 6.8),
+    qt6-multimediawidgets-dev (>= 6.8),
+    qt6-svg-dev (>= 6.8),
+    libdtk6core-dev (>= 6.7),
+    libdtk6gui-dev (>= 6.7),
+    libdtk6widget-dev (>= 6.7),
+    libdtk6declarative-dev (>= 6.7),
+    libdtk6log-dev (>= 6.7),
+    ffmpeg
+Standards-Version: 4.6.0
+Homepage: https://www.deepin.org
+Rules-Requires-Root: no
+
+Package: deepin-meme-plugin
+Architecture: any
+Depends: ${shlibs:Depends},
+    ${misc:Depends},
+    dde-control-center (>= 6.1),
+    dde-desktop (>= 6.5),
+    libqt6-multimedia6 (>= 6.8),
+    libdtk6core6 (>= 6.7),
+    libdtk6widget6 (>= 6.7),
+    ffmpeg
+Recommends: deepin-meme-plugin-data (= ${binary:Version})
+Description: Dynamic wallpaper effect plugin for Deepin Control Center
+ Deepin Meme Plugin enables interactive animated wallpaper effects on the
+ Deepin/UOS desktop. When the user performs file operations (delete, create,
+ rename, move, copy) on the desktop, themed character animation effects are
+ played at the file's coordinate position.
+ .
+ This package contains:
+  * The control center plugin (settings UI, preview, theme selection)
+  * The desktop effect daemon (file operation monitoring, effect playback)
+  * D-Bus service, autostart and systemd user unit
+
+Package: deepin-meme-plugin-data
+Section: misc
+Architecture: all
+Depends: ${misc:Depends}
+Description: Data files for deepin-meme-plugin (themes, dconfig schema)
+ This package contains architecture-independent data files for
+ deepin-meme-plugin:
+  * Example demo theme package (with procedurally generated placeholder videos)
+  * DConfig schema
+  * Theme package directory structure

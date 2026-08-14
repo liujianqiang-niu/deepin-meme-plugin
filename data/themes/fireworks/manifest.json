@@ -1,0 +1,46 @@
+{
+  "id": "fireworks",
+  "name": "烟花庆典",
+  "description": "庆典烟花,新建绽放删除熄灭",
+  "version": "1.0.0",
+  "author": "Deepin Meme Team",
+  "wallpaper": "wallpaper.mp4",
+  "thumbnail": "wallpaper.thumbnail.jpg",
+  "effects": {
+    "delete": {
+      "video": "effects/delete.webm",
+      "audio": "effects/delete.wav",
+      "anchor": "target",
+      "scale": 1.4,
+      "duration": 3500
+    },
+    "create": {
+      "video": "effects/create.webm",
+      "audio": "effects/create.wav",
+      "anchor": "target",
+      "scale": 1.5,
+      "duration": 3000
+    },
+    "rename": {
+      "video": "effects/rename.webm",
+      "audio": "effects/rename.wav",
+      "anchor": "target",
+      "scale": 1.0,
+      "duration": 2000
+    },
+    "move": {
+      "video": "effects/move.webm",
+      "audio": "effects/move.wav",
+      "anchor": "target",
+      "scale": 1.0,
+      "duration": 2500
+    },
+    "copy": {
+      "video": "effects/copy.webm",
+      "audio": "effects/copy.wav",
+      "anchor": "target",
+      "scale": 1.0,
+      "duration": 2500
+    }
+  }
+}

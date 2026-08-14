@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <rect width="48" height="48" rx="8" fill="#1a1a2e"/>
+  <circle cx="24" cy="24" r="16" fill="none" stroke="#ff6b00" stroke-width="2.5" opacity="0.8"/>
+  <circle cx="24" cy="24" r="10" fill="none" stroke="#ffaa00" stroke-width="2" opacity="0.6"/>
+  <path d="M 14 24 L 34 24 M 24 14 L 24 34" stroke="#ff6b00" stroke-width="1.5" opacity="0.5"/>
+  <circle cx="24" cy="24" r="3" fill="#ffaa00"/>
+  <text x="24" y="42" text-anchor="middle" font-family="sans-serif" font-size="6" fill="#888">MEME</text>
+</svg>

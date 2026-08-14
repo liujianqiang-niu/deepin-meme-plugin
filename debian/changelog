@@ -1,0 +1,15 @@
+deepin-meme-plugin (1.0.0-1) unstable; urgency=medium
+
+  * Initial release of deepin-meme-plugin
+  * Control center plugin for interactive dynamic wallpaper effects
+  * Desktop effect daemon with file operation monitoring
+  * DConfig schema for persistent settings
+  * 6 built-in theme packages: example, scifi-hero, pixel-monster, cosmic, fireworks, ninja
+  * Each theme includes wallpaper video + 5 effect videos (delete/create/rename/move/copy) + sound effects
+  * Dynamic wallpaper setting via Wayland D-Bus + X11 fallback window
+  * D-Bus interface: SetEnabled/SetTheme/GetThemes/PreviewEffect/ReloadThemes
+  * systemd user service + autostart desktop entry
+  * Theme development guide for extending new animations and effects
+  * Supports X11 and Wayland sessions
+
+ -- Deepin Desktop Environment Team <uos@uniontech.com>  Thu, 14 Aug 2026 19:00:00 +0800

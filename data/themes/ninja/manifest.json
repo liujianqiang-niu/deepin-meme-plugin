@@ -1,0 +1,46 @@
+{
+  "id": "ninja",
+  "name": "忍者剑客",
+  "description": "忍者剑客斩击文件消散",
+  "version": "1.0.0",
+  "author": "Deepin Meme Team",
+  "wallpaper": "wallpaper.mp4",
+  "thumbnail": "wallpaper.thumbnail.jpg",
+  "effects": {
+    "delete": {
+      "video": "effects/delete.webm",
+      "audio": "effects/delete.wav",
+      "anchor": "target",
+      "scale": 1.3,
+      "duration": 2000
+    },
+    "create": {
+      "video": "effects/create.webm",
+      "audio": "effects/create.wav",
+      "anchor": "target",
+      "scale": 1.0,
+      "duration": 2000
+    },
+    "rename": {
+      "video": "effects/rename.webm",
+      "audio": "effects/rename.wav",
+      "anchor": "target",
+      "scale": 1.0,
+      "duration": 2000
+    },
+    "move": {
+      "video": "effects/move.webm",
+      "audio": "effects/move.wav",
+      "anchor": "target",
+      "scale": 1.0,
+      "duration": 2500
+    },
+    "copy": {
+      "video": "effects/copy.webm",
+      "audio": "effects/copy.wav",
+      "anchor": "target",
+      "scale": 1.0,
+      "duration": 2500
+    }
+  }
+}

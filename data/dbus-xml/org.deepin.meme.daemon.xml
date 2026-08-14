@@ -1,0 +1,36 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="org.deepin.meme.daemon">
+    <method name="SetEnabled">
+      <arg name="enabled" type="b" direction="in"/>
+    </method>
+    <method name="SetTheme">
+      <arg name="themeId" type="s" direction="in"/>
+    </method>
+    <method name="GetTheme">
+      <arg name="themeId" type="s" direction="out"/>
+    </method>
+    <method name="GetThemes">
+      <arg name="themes" type="as" direction="out"/>
+    </method>
+    <method name="PreviewEffect">
+      <arg name="effectType" type="s" direction="in"/>
+    </method>
+    <method name="SetEffectVolume">
+      <arg name="volume" type="i" direction="in"/>
+    </method>
+    <method name="ReloadThemes"/>
+    <method name="GetEnabled">
+      <arg name="enabled" type="b" direction="out"/>
+    </method>
+    <signal name="ThemeChanged">
+      <arg name="themeId" type="s"/>
+    </signal>
+    <signal name="EffectTriggered">
+      <arg name="effectType" type="s"/>
+      <arg name="x" type="i"/>
+      <arg name="y" type="i"/>
+    </signal>
+  </interface>
+</node>

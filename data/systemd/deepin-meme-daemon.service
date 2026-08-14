@@ -1,0 +1,16 @@
+[Unit]
+Description=Deepin Meme Wallpaper Effect Daemon
+Description[zh_CN]=Deepin 趣味壁纸特效守护进程
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/deepin-meme-daemon
+Restart=on-failure
+RestartSec=5
+# Wait for graphical session
+StartLimitIntervalSec=0
+
+[Install]
+WantedBy=graphical-session.target

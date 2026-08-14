@@ -1,0 +1,16 @@
+{
+  "id": "cosmic-star",
+  "name": "宇宙星辰",
+  "description": "文件化为星尘消散于宇宙，删除文件时紫色星辰旋涡扩散",
+  "version": "1.0.0",
+  "author": "Deepin Meme Team",
+  "wallpaper": "wallpaper.mp4",
+  "thumbnail": "wallpaper.thumbnail.jpg",
+  "effects": {
+    "delete": { "video": "effects/delete.webm", "audio": "effects/delete.wav", "anchor": "target", "scale": 1.3, "duration": 3000 },
+    "create": { "video": "effects/create.webm", "audio": "effects/create.wav", "anchor": "target", "scale": 1.0, "duration": 2500 },
+    "rename": { "video": "effects/rename.webm", "audio": "effects/rename.wav", "anchor": "target", "scale": 1.0, "duration": 2000 },
+    "move":   { "video": "effects/move.webm",   "audio": "effects/move.wav",   "anchor": "target", "scale": 1.0, "duration": 2500 },
+    "copy":   { "video": "effects/copy.webm",   "audio": "effects/copy.wav",   "anchor": "target", "scale": 1.0, "duration": 2500 }
+  }
+}

@@ -12,14 +12,23 @@ namespace meme {
 MemeDConfig::MemeDConfig(QObject *parent)
     : QObject(parent)
 {
-    // DConfig 构造: DConfig(name, subpath, parent)
-    // name 对应 DConfig schema 文件名(不含 .json)
-    auto *cfg = new DConfig(QStringLiteral("org.deepin.meme"), QString(), this);
+    // 跨进程读取: DConfig::create(appId, name, subpath, parent)
+    //   appId = schema owner (谁拥有这个配置)
+    //   name  = schema 文件名(不含 .json)
+    // 控制中心插件进程的 DSGApplication::id() 是 org.deepin.dde.control-center,
+    // 必须用 create() 显式指定 appId=org.deepin.meme 才能找到正确的 schema。
+    auto *cfg = DConfig::create(
+        QStringLiteral("org.deepin.meme"),   // appId: schema owner
+        QStringLiteral("org.deepin.meme"),   // name:  config file name
+        QString(),                            // subpath
+        this);
     m_dconfig = cfg;
 
-    connect(cfg, &DConfig::valueChanged, this, [this](const QString &key) {
-        emit changed(key);
-    });
+    if (cfg) {
+        connect(cfg, &DConfig::valueChanged, this, [this](const QString &key) {
+            emit changed(key);
+        });
+    }
 }
 
 MemeDConfig::~MemeDConfig() = default;

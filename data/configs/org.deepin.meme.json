@@ -1,22 +1,42 @@
 {
-  "name": "meme",
-  "owner": "org.deepin.meme",
-  "version": "1.0.0",
-  "items": {
-    "enabled": {
-      "type": "boolean",
-      "default": false,
-      "description": "Whether meme wallpaper effects are enabled"
-    },
-    "currentTheme": {
-      "type": "string",
-      "default": "example",
-      "description": "Current meme theme id"
-    },
-    "effectVolume": {
-      "type": "integer",
-      "default": 80,
-      "description": "Effect audio volume (0-100)"
+    "magic": "dsg.config.meta",
+    "version": "1.0",
+    "contents": {
+        "enabled": {
+            "value": false,
+            "serial": 0,
+            "flags": [],
+            "name": "enable meme wallpaper effects",
+            "name[zh_CN]": "启用趣味壁纸特效",
+            "description": "Whether meme wallpaper effects are enabled",
+            "description[zh_CN]": "是否启用趣味壁纸特效",
+            "permissions": "readwrite",
+            "visibility": "public",
+            "type": "bool"
+        },
+        "currentTheme": {
+            "value": "example",
+            "serial": 0,
+            "flags": [],
+            "name": "current meme theme id",
+            "name[zh_CN]": "当前特效主题",
+            "description": "Current meme theme id",
+            "description[zh_CN]": "当前特效主题标识",
+            "permissions": "readwrite",
+            "visibility": "public",
+            "type": "string"
+        },
+        "effectVolume": {
+            "value": 80,
+            "serial": 0,
+            "flags": [],
+            "name": "effect audio volume",
+            "name[zh_CN]": "音效音量",
+            "description": "Effect audio volume (0-100)",
+            "description[zh_CN]": "音效音量 (0-100)",
+            "permissions": "readwrite",
+            "visibility": "public",
+            "type": "int"
+        }
     }
-  }
 }

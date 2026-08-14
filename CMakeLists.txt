@@ -24,11 +24,9 @@ set(DCC_PLUGIN_DIR "/usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/dde-control-center/pl
 # 主题包安装目录
 set(MEME_THEME_DIR "/usr/share/deepin-meme-themes")
 
-# DConfig schema 安装目录
-set(DCONFIG_META_DIR "/usr/share/dconfig/meta")
-
 find_package(Qt6 COMPONENTS Core Gui Widgets Multimedia DBus LinguistTools REQUIRED)
 find_package(Dtk6 COMPONENTS Core Widget REQUIRED)
+find_package(Dtk6DConfig REQUIRED)
 
 # 子模块
 add_subdirectory(src/common)
@@ -37,12 +35,13 @@ add_subdirectory(src/desktop-daemon)
 
 # 安装所有主题包
 install(DIRECTORY data/themes/example data/themes/scifi-hero data/themes/pixel-monster
-              data/themes/cosmic data/themes/fireworks data/themes/ninja
+               data/themes/cosmic data/themes/fireworks data/themes/ninja
     DESTINATION ${MEME_THEME_DIR}
     PATTERN "manifest.schema.json" EXCLUDE)
 
-install(FILES data/configs/org.deepin.meme.json
-    DESTINATION ${DCONFIG_META_DIR})
+# DConfig schema: 安装到 /usr/share/dsg/configs/org.deepin.meme/
+include(/usr/lib/x86_64-linux-gnu/cmake/Dtk6Tools/DtkDConfigMacros.cmake)
+dtk_add_config_meta_files(APPID org.deepin.meme FILES data/configs/org.deepin.meme.json)
 
 install(FILES data/dbus/org.deepin.meme.daemon.service
     DESTINATION /usr/share/dbus-1/services)

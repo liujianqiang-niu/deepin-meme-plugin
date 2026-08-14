@@ -3,7 +3,7 @@
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Controls 2.15
-import QtMultimedia 6.15
+import QtMultimedia
 
 // 预览窗口: 循环播放壁纸 + 按钮演示各特效
 Rectangle {

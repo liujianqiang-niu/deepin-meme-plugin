@@ -43,6 +43,7 @@ void WallpaperPlayer::ensureView()
 
     m_view = new QQuickView();
     m_view->setFlag(Qt::FramelessWindowHint);
+    m_view->setFlag(Qt::WindowStaysOnBottomHint);
     m_view->setColor(Qt::black);
 
     // 用 QML 渲染视频帧

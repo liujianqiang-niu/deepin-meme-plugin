@@ -35,23 +35,21 @@ Rectangle {
         color: "#1a1a2e"
         clip: true
 
-        Video {
-            id: wallpaperVideo
+        Image {
+            id: wallpaperImage
             anchors.fill: parent
             source: previewRoot.enabled && previewRoot.wallpaperUrl !== ""
                     ? Qt.resolvedUrl(previewRoot.wallpaperUrl) : ""
-            loops: MediaPlayer.Infinite
-            muted: true
-            fillMode: VideoOutput.PreserveAspectCrop
+            fillMode: Image.PreserveAspectCrop
             visible: previewRoot.enabled && previewRoot.wallpaperUrl !== ""
         }
 
         Text {
             anchors.centerIn: parent
-            text: previewRoot.enabled ? qsTr("选择主题后显示动态壁纸") : qsTr("请先启用趣味壁纸特效")
+            text: previewRoot.enabled ? qsTr("选择主题后显示壁纸预览") : qsTr("请先启用趣味壁纸特效")
             color: "#666"
             font.pixelSize: 14
-            visible: !wallpaperVideo.visible
+            visible: !wallpaperImage.visible
         }
 
         GridLayout {

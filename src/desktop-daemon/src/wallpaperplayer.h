@@ -5,8 +5,13 @@
 
 #include <QObject>
 #include <QString>
+#include <QVideoFrame>
 
-class QQuickView;
+class QWidget;
+class QMediaPlayer;
+class QVideoSink;
+
+class VideoDisplayWidget;
 
 class WallpaperPlayer : public QObject
 {
@@ -19,9 +24,11 @@ public:
     void stop();
 
 private:
-    QQuickView *m_view = nullptr;
+    VideoDisplayWidget *m_widget = nullptr;
+    QMediaPlayer *m_player = nullptr;
+    QVideoSink *m_sink = nullptr;
 
-    void ensureView();
+    void ensureWidget();
     void applyGeometry();
 };
 

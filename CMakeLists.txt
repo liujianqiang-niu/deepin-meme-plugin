@@ -49,10 +49,6 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/deepin-meme-plugin_zh_CN.qm
 install(FILES data/dbus/org.deepin.meme.daemon.service
     DESTINATION /usr/share/dbus-1/services)
 
-# autostart
-install(FILES data/autostart/deepin-meme-daemon.desktop
-    DESTINATION /usr/share/applications)
-
 # systemd user service
 install(FILES data/systemd/deepin-meme-daemon.service
     DESTINATION /usr/share/systemd/user)

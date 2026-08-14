@@ -7,6 +7,7 @@ PartOf=graphical-session.target
 Type=dbus
 BusName=org.deepin.meme.daemon
 ExecStart=/usr/bin/deepin-meme-daemon
+Environment=QT_LOGGING_RULES=meme.*=true
 Restart=on-failure
 RestartSec=5
 

@@ -37,5 +37,4 @@ target_link_options(dd-meme-wallpaper PRIVATE -Wl,--no-undefined)
 
 install(TARGETS dd-meme-wallpaper
     LIBRARY DESTINATION ${EDGE_PLUGIN_DIR}
-    NAMELINK_SKIP
 )

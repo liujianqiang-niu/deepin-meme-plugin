@@ -3,6 +3,8 @@
 
 #include <DConfig>
 
+DCORE_USE_NAMESPACE
+
 using namespace ddplugin_meme;
 
 static const char *kAppId = "org.deepin.meme";

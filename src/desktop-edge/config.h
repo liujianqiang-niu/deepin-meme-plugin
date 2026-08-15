@@ -9,6 +9,7 @@
 
 #include <QObject>
 #include <QString>
+#include <DConfig>
 
 namespace ddplugin_meme {
 
@@ -48,7 +49,7 @@ signals:
     void configChanged();
 
 private:
-    class DConfig *m_cfg = nullptr;
+    Dtk::Core::DConfig *m_cfg = nullptr;
 };
 
 }

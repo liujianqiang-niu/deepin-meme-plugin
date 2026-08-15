@@ -1,0 +1,14 @@
+{
+    "Name" : "dd-meme-wallpaper",
+    "Version" : "3.0.0",
+    "CompatVersion" : "3.0.0",
+    "Vendor" : "UnionTech Software Technology Co., Ltd.",
+    "Copyright" : "Copyright (C) 2026 UnionTech Software Technology Co., Ltd.",
+    "License" : ["GPL-3.0-or-later"],
+    "Category" : "",
+    "Description" : "Dynamic video wallpaper plugin for Deepin desktop.",
+    "UrlLink" : "https://www.uniontech.com",
+    "Depends" : [
+        {"Name" : "ddplugin-core", "Version": "1.0.0"}
+    ]
+}

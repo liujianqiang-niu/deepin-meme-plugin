@@ -5,6 +5,7 @@ import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Controls 2.15
 import QtQuick.Dialogs
+import QtMultimedia
 
 DccObject {
     DccObject {
@@ -21,10 +22,51 @@ DccObject {
     }
 
     DccObject {
+        name: "memePreview"
+        parentName: "meme"
+        displayName: qsTr("预览")
+        weight: 15
+        pageType: DccObject.Item
+        backgroundType: DccObject.Normal
+        page: ColumnLayout {
+            spacing: 8
+            Layout.fillWidth: true
+
+            Rectangle {
+                id: previewContainer
+                Layout.fillWidth: true
+                Layout.preferredHeight: 220
+                color: "#000"
+                clip: true
+                radius: 6
+
+                Video {
+                    id: previewVideo
+                    anchors.fill: parent
+                    fillMode: VideoOutput.PreserveAspectFit
+                    visible: false
+                    muted: true
+                    loops: MediaPlayer.Infinite
+                    onStopped: visible = false
+                    onPlaying: visible = true
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: qsTr("点击列表中的预览按钮查看效果")
+                    color: "#666"
+                    font.pixelSize: 14
+                    visible: !previewVideo.visible
+                }
+            }
+        }
+    }
+
+    DccObject {
         name: "memeUpload"
         parentName: "meme"
         displayName: qsTr("上传视频")
-        weight: 15
+        weight: 20
         pageType: DccObject.Item
         backgroundType: DccObject.Normal
         page: ColumnLayout {
@@ -81,8 +123,8 @@ DccObject {
     DccObject {
         name: "memeWallpaper"
         parentName: "meme"
-        displayName: qsTr("动态壁纸")
-        weight: 20
+        displayName: qsTr("动态壁纸列表")
+        weight: 30
         pageType: DccObject.Item
         backgroundType: DccObject.Normal
         page: ColumnLayout {
@@ -137,6 +179,15 @@ DccObject {
 
                         RowLayout {
                             spacing: 4
+
+                            Button {
+                                text: qsTr("预览")
+                                font.pixelSize: 10
+                                onClicked: {
+                                    previewVideo.source = dccData.urlFromPath(model.path)
+                                    previewVideo.play()
+                                }
+                            }
 
                             Button {
                                 text: qsTr("应用")

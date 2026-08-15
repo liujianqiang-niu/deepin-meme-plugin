@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 set(PLUGIN_NAME "meme")
 
-find_package(Qt6 COMPONENTS Core Qml Gui DBus Concurrent REQUIRED)
+find_package(Qt6 COMPONENTS Core Qml Gui DBus Concurrent Multimedia REQUIRED)
 find_package(Dtk6 COMPONENTS Core Widget REQUIRED)
 
 set(PLUGIN_SRCS
@@ -46,6 +46,7 @@ target_link_libraries(${PLUGIN_NAME} PRIVATE
     Qt6::Gui
     Qt6::DBus
     Qt6::Concurrent
+    Qt6::Multimedia
     Dtk6::Core
     Dtk6::Widget
 )

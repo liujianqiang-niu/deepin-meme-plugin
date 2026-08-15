@@ -1,20 +1,18 @@
 #!/bin/sh
 # SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Pre-removal: stop daemon, disable autostart
+# Pre-removal: disable wallpaper via DConfig
 
 set -e
 
 case "$1" in
     remove|deconfigure)
-        # Stop running daemon instances
-        if command -v systemctl >/dev/null 2>&1; then
-            systemctl --user stop deepin-meme-daemon.service 2>/dev/null || true
-            systemctl --user disable deepin-meme-daemon.service 2>/dev/null || true
+        # Best-effort: disable dynamic wallpaper before removing plugin
+        if command -v dconfig-cli >/dev/null 2>&1; then
+            dconfig-cli set -d org.deepin.meme -k enabled -v false 2>/dev/null || true
         fi
-        # Fallback: kill by process name
-        pkill -f deepin-meme-daemon 2>/dev/null || true
         ;;
 esac
 
 #DEBHELPER#
+exit 0

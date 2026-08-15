@@ -1,29 +1,24 @@
 #!/bin/sh
 # SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Post-installation: reload D-Bus, enable systemd user service
+# Post-installation: restart desktop edge plugin to load new wallpaper plugin
 
 set -e
 
 case "$1" in
     configure)
-        # Reload D-Bus session services so org.deepin.meme.daemon is recognized
-        if command -v dbus-send >/dev/null 2>&1; then
-            dbus-send --session --dest=org.freedesktop.DBus \
-                --type=method_call /org/freedesktop/DBus org.freedesktop.DBus.ReloadConfig 2>/dev/null || true
-        fi
-
-        # Reload systemd user units (best effort)
-        if command -v systemctl >/dev/null 2>&1; then
-            systemctl --user daemon-reload 2>/dev/null || true
-        fi
-
-        # Reload dconfig schema
-        if command -v dconfig >/dev/null 2>&1; then
-            dconfig reload 2>/dev/null || true
-        fi
+        # Restart dde-shell desktop service to load the edge plugin
+        for uid in $(ls /run/user 2>/dev/null || true); do
+            case "$uid" in *[!0-9]*) continue ;; esac
+            [ -S "/run/user/$uid/bus" ] || continue
+            user=$(getent passwd "$uid" | cut -d: -f1)
+            su -s /bin/sh -c "XDG_RUNTIME_DIR=/run/user/$uid \
+                DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$uid/bus \
+                timeout 8 systemctl --user restart \
+                'dde-shell-plugin@org.deepin.ds.desktop.service'" "$user" 2>/dev/null || true
+        done
         ;;
 esac
 
-# dh_installdeb will call this automatically
 #DEBHELPER#
+exit 0

@@ -1,20 +1,22 @@
 Source: deepin-meme-plugin
-Section: x11
+Section: utils
 Priority: optional
 Maintainer: Deepin Desktop Environment Team <uos@uniontech.com>
-Build-Depends: debhelper,
+Build-Depends: debhelper-compat (= 13),
     cmake (>= 3.23),
+    pkg-config,
     qt6-base-dev (>= 6.8),
     qt6-declarative-dev (>= 6.8),
-    qt6-multimedia-dev (>= 6.8),
     qt6-svg-dev (>= 6.8),
     libdtk6core-dev (>= 6.7),
-    libdtk6gui-dev (>= 6.7),
     libdtk6widget-dev (>= 6.7),
-    libdtk6declarative-dev (>= 6.7),
-    libdtk6log-dev (>= 6.7),
-    ffmpeg
-Standards-Version: 4.6.0
+    libavformat-dev,
+    libavcodec-dev,
+    libavutil-dev,
+    libswscale-dev,
+    dde-file-manager,
+    dde-control-center-dev
+Standards-Version: 4.6.2
 Homepage: https://www.deepin.org
 Rules-Requires-Root: no
 
@@ -23,31 +25,24 @@ Architecture: any
 Depends: ${shlibs:Depends},
     ${misc:Depends},
     dde-control-center (>= 6.1),
-    dde-desktop (>= 6.5),
-    libqt6multimedia6 (>= 6.8),
-    libqt6multimediawidgets6 (>= 6.8),
+    dde-file-manager,
+    ffmpeg,
     libdtk6core (>= 6.7),
-    libdtk6widget (>= 6.7),
-    ffmpeg
+    libdtk6widget (>= 6.7)
 Recommends: deepin-meme-plugin-data (= ${binary:Version})
-Description: Dynamic wallpaper effect plugin for Deepin Control Center
- Deepin Meme Plugin enables interactive animated wallpaper effects on the
- Deepin/UOS desktop. When the user performs file operations (delete, create,
- rename, move, copy) on the desktop, themed character animation effects are
- played at the file's coordinate position.
+Description: Deepin dynamic video wallpaper plugin
+ Desktop-edge plugin for dde-file-manager with FFmpeg video decoding,
+ control center UI with video upload and format conversion.
  .
  This package contains:
-  * The control center plugin (settings UI, preview, theme selection)
-  * The desktop effect daemon (file operation monitoring, effect playback)
-  * D-Bus service, autostart and systemd user unit
+  * Desktop-edge plugin (FFmpeg decoder, embedded rendering)
+  * Control center plugin (wallpaper list, upload, format conversion)
 
 Package: deepin-meme-plugin-data
 Section: misc
 Architecture: all
 Depends: ${misc:Depends}
-Description: Data files for deepin-meme-plugin (themes, dconfig schema)
- This package contains architecture-independent data files for
- deepin-meme-plugin:
-  * Example demo theme package (with procedurally generated placeholder videos)
-  * DConfig schema
-  * Theme package directory structure
+Description: Data files for deepin-meme-plugin (videos, dconfig schema)
+ This package contains architecture-independent data files:
+  * Preset video wallpapers (H264 MP4)
+  * DConfig schema (org.deepin.meme)

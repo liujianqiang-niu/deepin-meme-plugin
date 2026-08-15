@@ -1,6 +1,4 @@
+usr/lib/*/dde-file-manager/plugins/desktop-edge/*.so*
 usr/lib/*/dde-control-center/plugins_v1.1/meme/*
-usr/bin/deepin-meme-daemon
-usr/share/dbus-1/services/org.deepin.meme.daemon.service
-usr/share/systemd/user/deepin-meme-daemon.service
 usr/share/icons/hicolor/scalable/apps/meme_icon.svg
 usr/share/deepin-meme-plugin/translations/*.qm

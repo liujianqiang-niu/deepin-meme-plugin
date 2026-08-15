@@ -2,12 +2,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 set(PLUGIN_NAME "meme")
 
-find_package(Qt6 COMPONENTS Core Qml Gui Multimedia DBus REQUIRED)
+find_package(Qt6 COMPONENTS Core Qml Gui DBus Concurrent REQUIRED)
 find_package(Dtk6 COMPONENTS Core Widget REQUIRED)
 
 set(PLUGIN_SRCS
     src/memeplugin.h
     src/memeplugin.cpp
+    src/model.h
+    src/model.cpp
+    src/converter.h
+    src/converter.cpp
 )
 
 set(QML_FILES
@@ -37,18 +41,18 @@ if(NOT DCC_LIBRARY)
 endif()
 
 target_link_libraries(${PLUGIN_NAME} PRIVATE
-    meme-common
     ${DCC_LIBRARY}
     Qt6::Core
     Qt6::Gui
-    Qt6::Multimedia
     Qt6::DBus
+    Qt6::Concurrent
     Dtk6::Core
     Dtk6::Widget
 )
 
 target_include_directories(${PLUGIN_NAME} PRIVATE
     ${DCC_INCLUDE_DIR}
+    src
 )
 
 install(TARGETS ${PLUGIN_NAME}

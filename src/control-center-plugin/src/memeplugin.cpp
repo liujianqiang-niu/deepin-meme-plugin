@@ -1,50 +1,80 @@
-// SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "memeplugin.h"
-#include "memedconfig.h"
 
 #include "dccfactory.h"
 
+#include <DConfig>
+
 #include <QDir>
-#include <QDBusConnection>
-#include <QDBusMessage>
-#include <QDBusPendingCall>
-#include <QDBusPendingCallWatcher>
-#include <QDBusPendingReply>
+#include <QFileInfo>
 #include <QUrl>
 #include <QStandardPaths>
 #include <QLoggingCategory>
+#include <QFile>
+#include <QProcess>
+
+DCORE_USE_NAMESPACE
 
 Q_LOGGING_CATEGORY(memePlugin, "meme.plugin")
 
-static const char *kWallpaperDir = "/usr/share/deepin-meme-wallpapers";
+static const char *kAppId = "org.deepin.meme";
+static const char *kPresetDir = "/usr/share/deepin-meme-wallpapers";
 
 MemePlugin::MemePlugin(QObject *parent)
     : QObject(parent)
+    , m_model(new WallpaperModel(this))
+    , m_converter(new VideoConverter(this))
 {
-    loadWallpaperList();
+    readConfig();
 
-    meme::MemeDConfig cfg;
-    if (cfg.isValid()) {
-        m_enabled = cfg.enabled();
-        m_currentVideo = cfg.currentVideo();
-    }
+    connect(m_converter, &VideoConverter::progress, this, [this](int pct) {
+        m_convertProgress = pct;
+        emit convertProgressChanged();
+    });
+    connect(m_converter, &VideoConverter::finished, this, [this](bool success, const QString &out, const QString &err) {
+        m_convertProgress = 0;
+        emit convertProgressChanged();
+        emit convertingChanged();
+
+        if (success) {
+            qCInfo(memePlugin) << "convert success:" << out;
+            m_model->refresh();
+            applyWallpaper(out);
+        } else {
+            qCWarning(memePlugin) << "convert failed:" << err;
+        }
+    });
 }
 
 MemePlugin::~MemePlugin() = default;
 
-void MemePlugin::loadWallpaperList()
+void MemePlugin::readConfig()
 {
-    m_wallpapers.clear();
-    QDir dir(QString::fromUtf8(kWallpaperDir));
-    if (!dir.exists()) return;
+    DConfig *cfg = DConfig::create(kAppId, kAppId, QString(), this);
+    if (!cfg || !cfg->isValid()) {
+        qCWarning(memePlugin) << "DConfig not valid";
+        return;
+    }
+    m_enabled = cfg->value("enabled", false).toBool();
+    m_currentVideo = cfg->value("currentVideo", QString()).toString();
+    cfg->deleteLater();
+}
 
-    const auto files = dir.entryList({"*.mp4"}, QDir::Files, QDir::Name);
-    for (const QString &file : files) {
-        WallpaperEntry entry;
-        entry.name = file;
-        entry.path = dir.absoluteFilePath(file);
-        m_wallpapers.append(entry);
+void MemePlugin::writeConfigEnabled(bool e)
+{
+    DConfig *cfg = DConfig::create(kAppId, kAppId, QString(), this);
+    if (cfg && cfg->isValid()) {
+        cfg->setValue("enabled", e);
+        cfg->deleteLater();
+    }
+}
+
+void MemePlugin::writeConfigCurrentVideo(const QString &path)
+{
+    DConfig *cfg = DConfig::create(kAppId, kAppId, QString(), this);
+    if (cfg && cfg->isValid()) {
+        cfg->setValue("currentVideo", path);
+        cfg->deleteLater();
     }
 }
 
@@ -55,17 +85,8 @@ void MemePlugin::setEnabled(bool e)
     if (m_enabled != e) {
         m_enabled = e;
         emit enabledChanged(e);
-
-        meme::MemeDConfig cfg;
-        cfg.setEnabled(e);
-
-        if (!e) {
-            QDBusConnection::sessionBus().asyncCall(QDBusMessage::createMethodCall(
-                "org.deepin.meme.daemon", "/org/deepin/meme/daemon",
-                "org.deepin.meme.daemon", "Stop"));
-        } else if (!m_currentVideo.isEmpty()) {
-            applyWallpaper(m_currentVideo);
-        }
+        writeConfigEnabled(e);
+        // edge 插件监听 DConfig valueChanged 自动启停，无需 D-Bus
     }
 }
 
@@ -76,61 +97,73 @@ void MemePlugin::setCurrentVideo(const QString &path)
     if (m_currentVideo != path) {
         m_currentVideo = path;
         emit currentVideoChanged(path);
-        meme::MemeDConfig cfg;
-        cfg.setCurrentVideo(path);
+        writeConfigCurrentVideo(path);
     }
 }
 
-QVariantList MemePlugin::wallpaperModel() const
-{
-    QVariantList model;
-    for (const auto &w : m_wallpapers) {
-        QVariantMap entry;
-        entry[QStringLiteral("name")] = w.name;
-        entry[QStringLiteral("path")] = w.path;
-        model.append(entry);
-    }
-    return model;
-}
+WallpaperModel *MemePlugin::wallpaperModel() const { return m_model; }
+
+bool MemePlugin::converting() const { return m_converter->isConverting(); }
+
+int MemePlugin::convertProgress() const { return m_convertProgress; }
 
 void MemePlugin::applyWallpaper(const QString &path)
 {
     qCInfo(memePlugin) << "applyWallpaper:" << path;
-
     setCurrentVideo(path);
-
-    meme::MemeDConfig cfg;
-    cfg.setEnabled(true);
-
     if (!m_enabled) {
         m_enabled = true;
         emit enabledChanged(true);
+        writeConfigEnabled(true);
     }
-
-    auto msg = QDBusMessage::createMethodCall(
-        "org.deepin.meme.daemon", "/org/deepin/meme/daemon",
-        "org.deepin.meme.daemon", "SetWallpaper");
-    msg << path;
-
-    auto call = QDBusConnection::sessionBus().asyncCall(msg);
-    auto *watcher = new QDBusPendingCallWatcher(call, this);
-    connect(watcher, &QDBusPendingCallWatcher::finished, this, [this, path](QDBusPendingCallWatcher *w) {
-        QDBusPendingReply<void> reply = *w;
-        if (reply.isError()) {
-            qCWarning(memePlugin) << "D-Bus SetWallpaper failed:" << reply.error().message()
-                                  << "path:" << path;
-        } else {
-            qCInfo(memePlugin) << "D-Bus SetWallpaper succeeded, path:" << path;
-        }
-        w->deleteLater();
-    });
-
-    qCInfo(memePlugin) << "Applied wallpaper:" << path;
 }
 
 QUrl MemePlugin::urlFromPath(const QString &path) const
 {
     return QUrl::fromLocalFile(path);
+}
+
+void MemePlugin::uploadVideo(const QUrl &url)
+{
+    const QString localPath = url.toLocalFile();
+    if (localPath.isEmpty()) {
+        qCWarning(memePlugin) << "uploadVideo: invalid url" << url;
+        return;
+    }
+
+    const QString userDir = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation)
+            + QStringLiteral("/deepin-meme-wallpapers");
+    QDir().mkpath(userDir);
+
+    // 检查格式：H264 直接复制，非 H264 转码
+    if (VideoConverter::checkFormat(localPath)) {
+        const QString dest = QDir(userDir).filePath(QFileInfo(localPath).fileName());
+        if (QFile::copy(localPath, dest)) {
+            qCInfo(memePlugin) << "copied H264 video:" << dest;
+            m_model->refresh();
+        } else {
+            qCWarning(memePlugin) << "copy failed:" << dest;
+        }
+    } else {
+        qCInfo(memePlugin) << "starting conversion for" << localPath;
+        m_convertProgress = 0;
+        emit convertingChanged();
+        emit convertProgressChanged();
+        m_converter->convert(localPath, userDir);
+    }
+}
+
+void MemePlugin::removeUserWallpaper(int index)
+{
+    m_model->removeUserWallpaper(index);
+}
+
+void MemePlugin::cancelConvert()
+{
+    m_converter->cancel();
+    m_convertProgress = 0;
+    emit convertProgressChanged();
+    emit convertingChanged();
 }
 
 DCC_FACTORY_CLASS(MemePlugin)

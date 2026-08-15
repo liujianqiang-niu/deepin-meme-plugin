@@ -3,26 +3,25 @@
 #ifndef MEMEPLUGIN_H
 #define MEMEPLUGIN_H
 
-#include <QObject>
-#include <QStringList>
-#include <QVariantList>
-#include <QUrl>
+#include "model.h"
+#include "converter.h"
 
-struct WallpaperEntry {
-    QString name;
-    QString path;
-};
+#include <QObject>
+#include <QString>
+#include <QUrl>
 
 class MemePlugin : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
     Q_PROPERTY(QString currentVideo READ currentVideo WRITE setCurrentVideo NOTIFY currentVideoChanged)
-    Q_PROPERTY(QVariantList wallpaperModel READ wallpaperModel NOTIFY wallpaperModelChanged)
+    Q_PROPERTY(WallpaperModel *wallpaperModel READ wallpaperModel CONSTANT)
+    Q_PROPERTY(bool converting READ converting NOTIFY convertingChanged)
+    Q_PROPERTY(int convertProgress READ convertProgress NOTIFY convertProgressChanged)
 
 public:
     explicit MemePlugin(QObject *parent = nullptr);
-    ~MemePlugin();
+    ~MemePlugin() override;
 
     bool enabled() const;
     void setEnabled(bool e);
@@ -30,22 +29,33 @@ public:
     QString currentVideo() const;
     void setCurrentVideo(const QString &path);
 
-    QVariantList wallpaperModel() const;
+    WallpaperModel *wallpaperModel() const;
+    bool converting() const;
+    int convertProgress() const;
 
     Q_INVOKABLE void applyWallpaper(const QString &path);
     Q_INVOKABLE QUrl urlFromPath(const QString &path) const;
+    Q_INVOKABLE void uploadVideo(const QUrl &url);
+    Q_INVOKABLE void removeUserWallpaper(int index);
+    Q_INVOKABLE void cancelConvert();
 
 signals:
     void enabledChanged(bool);
     void currentVideoChanged(const QString &);
-    void wallpaperModelChanged();
+    void convertingChanged();
+    void convertProgressChanged();
 
 private:
-    void loadWallpaperList();
+    WallpaperModel *m_model = nullptr;
+    VideoConverter *m_converter = nullptr;
 
-    QList<WallpaperEntry> m_wallpapers;
     bool m_enabled = false;
     QString m_currentVideo;
+    int m_convertProgress = 0;
+
+    void readConfig();
+    void writeConfigEnabled(bool e);
+    void writeConfigCurrentVideo(const QString &path);
 };
 
 #endif // MEMEPLUGIN_H

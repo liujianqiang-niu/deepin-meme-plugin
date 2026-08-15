@@ -1,11 +1,24 @@
-deepin-meme-plugin (1.0.0-3) unstable; urgency=medium
+deepin-meme-plugin (3.0.0) unstable; urgency=medium
+
+  * Rewrite: edge plugin (FFmpeg decode + desktop render + right-click menu)
+    + control center plugin (DConfig + model + video converter), drop daemon
+  * Fix: restore static wallpaper when dynamic wallpaper is disabled
+  * Fix: AV1 video upload (auto-convert to H264 with progress display)
+  * Fix: upload progress bar shows in real-time during conversion
+  * Fix: right-click menu not responding + restore control center preview
+  * Fix(edge): remove NAMELINK_SKIP so DPF can find unversioned .so
+  * Fix: QML files at module root (qmldir paths Meme.qml not qml/Meme.qml)
+
+ -- Deepin Desktop Environment Team <uos@uniontech.com>  Sat, 15 Aug 2026 12:00:00 +0800
+
+deepin-meme-plugin (1.0.0) unstable; urgency=medium
 
   * Fix: move QML files from qml/ subdir to root (match accounts structure)
   * This is the critical fix - qmldir paths now Meme.qml not qml/Meme.qml
 
  -- Deepin Desktop Environment Team <uos@uniontech.com>  Fri, 14 Aug 2026 20:00:00 +0800
 
-deepin-meme-plugin (1.0.0-2) unstable; urgency=medium
+deepin-meme-plugin (1.0.0) unstable; urgency=medium
 
   * Fix: link libdde-control-center.so for DccFactory symbol
   * Fix: remove lib prefix from meme.so (PREFIX "")
@@ -15,7 +28,7 @@ deepin-meme-plugin (1.0.0-2) unstable; urgency=medium
 
  -- Deepin Desktop Environment Team <uos@uniontech.com>  Fri, 14 Aug 2026 19:30:00 +0800
 
-deepin-meme-plugin (1.0.0-1) unstable; urgency=medium
+deepin-meme-plugin (1.0.0) unstable; urgency=medium
 
   * Initial release of deepin-meme-plugin
   * Control center plugin for interactive dynamic wallpaper effects

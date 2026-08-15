@@ -55,6 +55,7 @@ private:
     bool m_enabled = false;
     QString m_currentVideo;
     int m_convertProgress = 0;
+    bool m_converting = false;
     QString m_statusMessage;
 
     void setStatusMessage(const QString &msg);

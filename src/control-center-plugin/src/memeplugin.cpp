@@ -31,6 +31,7 @@ MemePlugin::MemePlugin(QObject *parent)
         emit convertProgressChanged();
     });
     connect(m_converter, &VideoConverter::finished, this, [this](bool success, const QString &out, const QString &err) {
+        m_converting = false;
         m_convertProgress = 0;
         emit convertProgressChanged();
         emit convertingChanged();
@@ -110,7 +111,7 @@ void MemePlugin::setCurrentVideo(const QString &path)
 
 WallpaperModel *MemePlugin::wallpaperModel() const { return m_model; }
 
-bool MemePlugin::converting() const { return m_converter->isConverting(); }
+bool MemePlugin::converting() const { return m_converting; }
 
 int MemePlugin::convertProgress() const { return m_convertProgress; }
 
@@ -162,6 +163,7 @@ void MemePlugin::uploadVideo(const QUrl &url)
     } else {
         qCInfo(memePlugin) << "starting conversion for" << localPath;
         setStatusMessage(tr("正在转码为 H264..."));
+        m_converting = true;
         m_convertProgress = 0;
         emit convertingChanged();
         emit convertProgressChanged();
@@ -189,6 +191,7 @@ void MemePlugin::removeUserWallpaper(int index)
 void MemePlugin::cancelConvert()
 {
     m_converter->cancel();
+    m_converting = false;
     m_convertProgress = 0;
     emit convertProgressChanged();
     emit convertingChanged();

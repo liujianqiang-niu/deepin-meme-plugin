@@ -97,27 +97,32 @@ void VideoDecoder::releaseFrameSlot()
 
 bool VideoDecoder::playOne(const QString &path)
 {
+    qWarning() << "[meme-wallpaper] playOne start:" << path;
     DecodeOptions opt;
     {
         QMutexLocker locker(&mutex);
         opt = options;
     }
+    qWarning() << "[meme-wallpaper] playOne mode=" << int(opt.mode) << "maxWidth=" << opt.maxWidth;
 
     AVFormatContext *fmt = nullptr;
     if (avformat_open_input(&fmt, path.toUtf8().constData(), nullptr, nullptr) < 0) {
         qWarning() << "[meme-wallpaper] open failed:" << path;
         return false;
     }
+    qWarning() << "[meme-wallpaper] playOne: avformat_open_input OK";
     if (avformat_find_stream_info(fmt, nullptr) < 0) {
         avformat_close_input(&fmt);
         return false;
     }
+    qWarning() << "[meme-wallpaper] playOne: find_stream_info OK";
 
     int vIndex = av_find_best_stream(fmt, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
     if (vIndex < 0) {
         avformat_close_input(&fmt);
         return false;
     }
+    qWarning() << "[meme-wallpaper] playOne: vIndex=" << vIndex;
 
     AVStream *st = fmt->streams[vIndex];
     const AVCodec *codec = avcodec_find_decoder(st->codecpar->codec_id);
@@ -131,10 +136,13 @@ bool VideoDecoder::playOne(const QString &path)
         avformat_close_input(&fmt);
         return false;
     }
+    qWarning() << "[meme-wallpaper] playOne: codec found" << codec->name;
     avcodec_parameters_to_context(ctx, st->codecpar);
+    qWarning() << "[meme-wallpaper] playOne: params_to_context OK";
 
     AVHWDeviceType hwType = AV_HWDEVICE_TYPE_NONE;
     AVBufferRef *hwDev = createHwDevice(opt.mode, &hwType);
+    qWarning() << "[meme-wallpaper] playOne: hwDev=" << hwDev << "hwType=" << hwType;
     bool useHw = false;
     if (hwDev) {
         for (int i = 0;; ++i) {
@@ -166,6 +174,7 @@ bool VideoDecoder::playOne(const QString &path)
     }
 
     if (avcodec_open2(ctx, codec, nullptr) < 0) {
+        qWarning() << "[meme-wallpaper] playOne: avcodec_open2 failed (useHw=" << useHw << ")";
         if (useHw) {
             av_buffer_unref(&ctx->hw_device_ctx);
             ctx->hw_device_ctx = nullptr;
@@ -185,6 +194,7 @@ bool VideoDecoder::playOne(const QString &path)
             return false;
         }
     }
+    qWarning() << "[meme-wallpaper] playOne: avcodec_open2 OK useHw=" << useHw;
 
     int srcW = ctx->width > 0 ? ctx->width : st->codecpar->width;
     int srcH = ctx->height > 0 ? ctx->height : st->codecpar->height;
@@ -277,12 +287,14 @@ bool VideoDecoder::playOne(const QString &path)
         return timer.nsecsElapsed() / 1000;
     };
 
+    qWarning() << "[meme-wallpaper] playOne: entering decode loop, stopFlag=" << stopFlag.load();
+
+    int decodeIter = 0;
     while (!stopFlag.load()) {
         int ret = av_read_frame(fmt, pkt);
         if (ret < 0) {
             av_seek_frame(fmt, vIndex, 0, AVSEEK_FLAG_BACKWARD);
             avcodec_flush_buffers(ctx);
-            // 循环时重置时钟，避免越积越拖
             timer.restart();
             nextPtsUs = 0;
             continue;
@@ -298,6 +310,8 @@ bool VideoDecoder::playOne(const QString &path)
         av_packet_unref(pkt);
 
         while (!stopFlag.load() && avcodec_receive_frame(ctx, frame) == 0) {
+            if ((decodeIter++ % 60) == 0)
+                qWarning() << "[meme-wallpaper] playOne: decode frame" << decodeIter << "inFlight=" << inFlight.load();
             const qint64 now = nowUs();
             if (now > nextPtsUs + dropSlackUs) {
                 // 落后：丢帧；时钟对齐到下一拍，避免 nextPts=now 后连续再丢半秒

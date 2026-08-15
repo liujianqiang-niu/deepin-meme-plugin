@@ -12,6 +12,14 @@ VideoConverter::VideoConverter(QObject *parent)
 {
 }
 
+VideoConverter::~VideoConverter()
+{
+    if (m_process) {
+        m_process->kill();
+        m_process->waitForFinished(3000);
+    }
+}
+
 bool VideoConverter::checkFormat(const QString &path)
 {
     QProcess proc;

@@ -13,6 +13,7 @@ class VideoConverter : public QObject
     Q_OBJECT
 public:
     explicit VideoConverter(QObject *parent = nullptr);
+    ~VideoConverter();
 
     /** 检查视频是否为 H264 编码，返回 true 表示符合壁纸引擎要求 */
     static bool checkFormat(const QString &path);

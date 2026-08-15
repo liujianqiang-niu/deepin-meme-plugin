@@ -8,6 +8,7 @@ import QtQuick.Dialogs
 import QtMultimedia
 
 DccObject {
+    // ─── 启用开关 ───
     DccObject {
         name: "memeEnabled"
         parentName: "meme"
@@ -21,52 +22,12 @@ DccObject {
         }
     }
 
-    DccObject {
-        name: "memePreview"
-        parentName: "meme"
-        displayName: qsTr("预览")
-        weight: 15
-        pageType: DccObject.Item
-        backgroundType: DccObject.Normal
-        page: ColumnLayout {
-            spacing: 8
-            Layout.fillWidth: true
-
-            Rectangle {
-                id: previewContainer
-                Layout.fillWidth: true
-                Layout.preferredHeight: 220
-                color: "#000"
-                clip: true
-                radius: 6
-
-                Video {
-                    id: previewVideo
-                    anchors.fill: parent
-                    fillMode: VideoOutput.PreserveAspectFit
-                    visible: false
-                    muted: true
-                    loops: MediaPlayer.Infinite
-                    onStopped: visible = false
-                    onPlaying: visible = true
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    text: qsTr("点击列表中的预览按钮查看效果")
-                    color: "#666"
-                    font.pixelSize: 14
-                    visible: !previewVideo.visible
-                }
-            }
-        }
-    }
-
+    // ─── 上传视频 ───
     DccObject {
         name: "memeUpload"
         parentName: "meme"
         displayName: qsTr("上传视频")
-        weight: 20
+        weight: 15
         pageType: DccObject.Item
         backgroundType: DccObject.Normal
         page: ColumnLayout {
@@ -120,24 +81,55 @@ DccObject {
         }
     }
 
+    // ─── 预览 + 壁纸列表（合并到同一 DccObject，previewVideo id 可在 delegate 中引用）───
     DccObject {
         name: "memeWallpaper"
         parentName: "meme"
-        displayName: qsTr("动态壁纸列表")
-        weight: 30
+        displayName: qsTr("动态壁纸")
+        weight: 20
         pageType: DccObject.Item
         backgroundType: DccObject.Normal
         page: ColumnLayout {
             spacing: 8
             Layout.fillWidth: true
 
+            // ── 预览区域 ──
+            Rectangle {
+                id: previewContainer
+                Layout.fillWidth: true
+                Layout.preferredHeight: 220
+                color: "#000"
+                clip: true
+                radius: 6
+
+                Video {
+                    id: previewVideo
+                    anchors.fill: parent
+                    fillMode: VideoOutput.PreserveAspectFit
+                    visible: false
+                    muted: true
+                    loops: MediaPlayer.Infinite
+                    onStopped: visible = false
+                    onPlaying: visible = true
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: qsTr("点击列表中的预览按钮查看效果")
+                    color: "#666"
+                    font.pixelSize: 14
+                    visible: !previewVideo.visible
+                }
+            }
+
+            // ── 壁纸网格 ──
             GridView {
                 id: wallpaperGrid
                 Layout.fillWidth: true
-                Layout.preferredHeight: Math.ceil(count / 3) * 120 + 20
+                Layout.preferredHeight: Math.ceil(count / 3) * 130 + 20
                 model: dccData.wallpaperModel
                 cellWidth: width / 3 - 4
-                cellHeight: 120
+                cellHeight: 130
                 interactive: false
                 clip: true
 
@@ -154,7 +146,7 @@ DccObject {
                         anchors.margins: 6
                         spacing: 4
 
-                        // 缩略图占位（暂无缩略图，用色块代替）
+                        // 缩略图占位
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 50

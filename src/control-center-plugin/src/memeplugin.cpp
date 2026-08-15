@@ -39,7 +39,8 @@ MemePlugin::MemePlugin(QObject *parent)
         if (success) {
             qCInfo(memePlugin) << "convert success:" << out;
             m_model->refresh();
-            applyWallpaper(out);
+            // 不自动应用壁纸，让用户自己从列表中选择并点"应用"
+            // 之前自动 applyWallpaper 导致 edge 插件在文件刚写入时打开失败
         } else {
             qCWarning(memePlugin) << "convert failed:" << err;
         }
@@ -138,6 +139,8 @@ void MemePlugin::uploadVideo(const QUrl &url)
     // 检查格式：H264 直接复制，非 H264 转码
     if (VideoConverter::checkFormat(localPath)) {
         const QString dest = QDir(userDir).filePath(QFileInfo(localPath).fileName());
+        if (QFile::exists(dest))
+            QFile::remove(dest);
         if (QFile::copy(localPath, dest)) {
             qCInfo(memePlugin) << "copied H264 video:" << dest;
             m_model->refresh();
@@ -155,7 +158,16 @@ void MemePlugin::uploadVideo(const QUrl &url)
 
 void MemePlugin::removeUserWallpaper(int index)
 {
+    const QString path = m_model->pathAt(index);
     m_model->removeUserWallpaper(index);
+    if (path == m_currentVideo) {
+        setCurrentVideo(QString());
+        if (m_enabled) {
+            m_enabled = false;
+            emit enabledChanged(false);
+            writeConfigEnabled(false);
+        }
+    }
 }
 
 void MemePlugin::cancelConvert()

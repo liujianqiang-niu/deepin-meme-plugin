@@ -140,6 +140,10 @@ void VideoProxy::drawFpsOverlay(QPainter &pa)
 void VideoProxy::paintEvent(QPaintEvent *e)
 {
     Q_UNUSED(e)
+    static int paintCount = 0;
+    if ((paintCount++ % 60) == 0)
+        qWarning() << "[meme-wallpaper] paintEvent #" << paintCount << "pixmap.isNull=" << pixmap.isNull()
+                   << "size=" << size() << "pixmap.size=" << pixmap.size();
     paintScheduled = false;
     std::function<void()> done = std::move(afterPaint);
     afterPaint = {};

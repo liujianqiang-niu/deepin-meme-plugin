@@ -15,8 +15,11 @@ void MemeWallpaperPlugin::initialize() {}
 
 bool MemeWallpaperPlugin::start()
 {
+    qWarning() << "[meme-wallpaper] plugin start() called";
     engine = new WallpaperEngine();
-    return engine->init();
+    bool ok = engine->init();
+    qWarning() << "[meme-wallpaper] engine init() returned" << ok;
+    return ok;
 }
 
 void MemeWallpaperPlugin::stop()

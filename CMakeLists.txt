@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.23)
 
 project(deepin-meme-plugin
-    VERSION 2.0.0
+    VERSION 3.0.0
     DESCRIPTION "Deepin dynamic wallpaper plugin"
     LANGUAGES CXX
 )
@@ -17,22 +17,25 @@ set(CMAKE_AUTORCC ON)
 set(DCC_SOURCE_ROOT "/home/uos/work-ljq/work-v25/code-work/ai-work/dde-control-center")
 set(DCC_INCLUDE_DIR "${DCC_SOURCE_ROOT}/include")
 set(DCC_PLUGIN_DIR "/usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/dde-control-center/plugins_v1.1")
+set(DFM_SOURCE_ROOT "/home/uos/work-ljq/work-v25/code-work/ai-work/dde-file-manager")
+set(DFM_INCLUDE_DIR "${DFM_SOURCE_ROOT}/include")
+set(EDGE_PLUGIN_DIR "/usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/dde-file-manager/plugins/desktop-edge")
 set(MEME_WALLPAPER_DIR "/usr/share/deepin-meme-wallpapers")
 
-find_package(Qt6 COMPONENTS Core Gui Widgets Multimedia DBus LinguistTools REQUIRED)
-find_package(Dtk6 COMPONENTS Core Widget REQUIRED)
-find_package(Dtk6DConfig REQUIRED)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Gui DBus Concurrent Network LinguistTools)
+find_package(Dtk6 REQUIRED COMPONENTS Core)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(FFMPEG REQUIRED libavformat libavcodec libavutil libswscale)
+find_library(DFM6_BASE_LIB dfm6-base REQUIRED)
+find_library(DFM6_FRAMEWORK_LIB dfm6-framework REQUIRED)
 
-add_subdirectory(src/common)
+add_subdirectory(src/desktop-edge)
 add_subdirectory(src/control-center-plugin)
-add_subdirectory(src/desktop-daemon)
 
-# 安装动态壁纸 mp4 和透明 PNG
+# 预置视频
 install(DIRECTORY data/res/
     DESTINATION ${MEME_WALLPAPER_DIR}
     FILES_MATCHING PATTERN "*.mp4")
-install(FILES data/res/transparent.png
-    DESTINATION ${MEME_WALLPAPER_DIR})
 
 # DConfig schema
 dtk_add_config_meta_files(APPID org.deepin.meme FILES data/configs/org.deepin.meme.json)
@@ -43,17 +46,8 @@ qt_add_lupdate(LTS_FILES
     TS_FILES translations/deepin-meme-plugin_zh_CN.ts)
 qt_add_lrelease(QM_FILES
     TS_FILES translations/deepin-meme-plugin_zh_CN.ts)
-
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/deepin-meme-plugin_zh_CN.qm
     DESTINATION /usr/share/deepin-meme-plugin/translations)
-
-# D-Bus service
-install(FILES data/dbus/org.deepin.meme.daemon.service
-    DESTINATION /usr/share/dbus-1/services)
-
-# systemd user service
-install(FILES data/systemd/deepin-meme-daemon.service
-    DESTINATION /usr/share/systemd/user)
 
 # 图标
 install(FILES data/icons/meme_icon.svg

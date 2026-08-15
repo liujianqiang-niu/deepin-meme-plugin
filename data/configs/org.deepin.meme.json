@@ -25,6 +25,30 @@
             "permissions": "readwrite",
             "visibility": "public",
             "type": "string"
+        },
+        "decodeMode": {
+            "value": "software",
+            "serial": 0,
+            "flags": [],
+            "name": "decode mode",
+            "name[zh_CN]": "解码模式",
+            "description": "software/cuda/vaapi/auto",
+            "description[zh_CN]": "软解/CUDA/VAAPI/自动",
+            "permissions": "readwrite",
+            "visibility": "public",
+            "type": "string"
+        },
+        "fillMode": {
+            "value": "fill",
+            "serial": 0,
+            "flags": [],
+            "name": "fill mode",
+            "name[zh_CN]": "铺屏方式",
+            "description": "fill/fit/stretch/center/tile",
+            "description[zh_CN]": "铺满/自适应/拉伸/居中/平铺",
+            "permissions": "readwrite",
+            "visibility": "public",
+            "type": "string"
         }
     }
 }

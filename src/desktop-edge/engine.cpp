@@ -261,20 +261,14 @@ void WallpaperEnginePrivate::setBackgroundVisibleFor(const QString &screenName, 
 {
     auto map = rootMap();
     QWidget *root = map.value(screenName);
-    if (!root) {
-        qWarning() << "[meme-wallpaper] setBackgroundVisibleFor: no root for" << screenName;
+    if (!root)
         return;
-    }
-    int hiddenCount = 0;
     for (QObject *obj : root->children()) {
         if (auto *wid = qobject_cast<QWidget *>(obj)) {
-            if (wid->property(DesktopFrameProperty::kPropWidgetName).toString() == QLatin1String("background")) {
+            if (wid->property(DesktopFrameProperty::kPropWidgetName).toString() == QLatin1String("background"))
                 wid->setVisible(v);
-                ++hiddenCount;
-            }
         }
     }
-    qWarning() << "[meme-wallpaper] setBackgroundVisibleFor" << screenName << "visible=" << v << "bgWidgets=" << hiddenCount;
 }
 
 QString WallpaperEnginePrivate::sourcePath() const
@@ -335,13 +329,8 @@ void WallpaperEnginePrivate::startSharedDecoders()
             targets.reserve(screens.size());
             for (const QString &name : screens) {
                 VideoProxyPointer proxy = widgets.value(name);
-                if (proxy.isNull()) {
-                    qWarning() << "[meme-wallpaper] frameReady: no widget for screen" << name << "widgets=" << widgets.size();
-                } else if (!proxy->isVisible()) {
-                    qWarning() << "[meme-wallpaper] frameReady: widget not visible for screen" << name;
-                } else {
+                if (!proxy.isNull() && proxy->isVisible())
                     targets.append(proxy);
-                }
             }
             if (targets.isEmpty()) {
                 decoder->releaseFrameSlot();
@@ -357,9 +346,6 @@ void WallpaperEnginePrivate::startSharedDecoders()
             const int h = frame.height > 0 ? frame.height : pm.height();
             for (const VideoProxyPointer &proxy : targets)
                 proxy->presentPixmap(pm, w, h, {});
-            static int presentCount = 0;
-            if ((presentCount++ % 60) == 0)
-                qWarning() << "[meme-wallpaper] presentPixmap #" << presentCount << "to" << targets.size() << "proxies";
             decoder->releaseFrameSlot();
         }, Qt::QueuedConnection);
         decoder->start();
@@ -382,11 +368,10 @@ void WallpaperEnginePrivate::stopPlayers()
 void WallpaperEnginePrivate::startPlayers()
 {
     if (playbackSuspended || sessionLocked || screenSaverActive) {
-        qWarning() << "[meme-wallpaper] startPlayers skipped (suspended)";
+        qInfo() << "[meme-wallpaper] startPlayers skipped (suspended)";
         return;
     }
     stopSharedDecoders();
-    qWarning() << "[meme-wallpaper] startPlayers: widgets=" << widgets.size() << "screenVideo=" << screenVideo.size();
     for (const VideoProxyPointer &w : widgets)
         if (!w.isNull())
             w->show();
@@ -452,9 +437,6 @@ bool WallpaperEngine::init()
             return false;
         }
 
-        qWarning() << "[meme-wallpaper] init: DConfig valid, enabled=" << d->cfg->enabled()
-                   << "currentVideo=" << d->cfg->currentVideo();
-
         if (!registerMenu())
             dpfSignalDispatcher->subscribe("dfmplugin_menu", "signal_MenuScene_SceneAdded",
                                            this, &WallpaperEngine::registerMenu);
@@ -463,8 +445,6 @@ bool WallpaperEngine::init()
 
         if (d->cfg->enabled())
             turnOn(true);
-        else
-            qWarning() << "[meme-wallpaper] enabled=false, skipping turnOn";
     } catch (const std::exception &ex) {
         qWarning() << "[meme-wallpaper] init exception:" << ex.what();
         return false;
@@ -517,9 +497,7 @@ void WallpaperEngine::turnOff()
 void WallpaperEngine::refreshSource()
 {
     d->screenVideo.clear();
-    const auto roots = ddplugin_meme_util::desktopFrameRootWindows();
-    qWarning() << "[meme-wallpaper] refreshSource: rootWindows=" << roots.size();
-    for (QWidget *win : roots) {
+    for (QWidget *win : ddplugin_meme_util::desktopFrameRootWindows()) {
         const QString name = getScreenName(win);
         if (name.isEmpty() || !d->isScreenActive(name))
             continue;
@@ -536,7 +514,6 @@ void WallpaperEngine::refreshSource()
 void WallpaperEngine::build()
 {
     QList<QWidget *> root = ddplugin_meme_util::desktopFrameRootWindows();
-    qWarning() << "[meme-wallpaper] build: rootWindows=" << root.size() << "widgets(before)=" << d->widgets.size();
     QMap<QString, QWidget *> alive;
 
     for (QWidget *win : root) {
@@ -560,7 +537,6 @@ void WallpaperEngine::build()
         } else {
             bwp = d->createWidget(win);
             d->widgets.insert(screenName, bwp);
-            qWarning() << "[meme-wallpaper] build: created widget for" << screenName << "total widgets=" << d->widgets.size();
         }
 
         const QUrl url = d->videoForScreen(screenName);
@@ -607,7 +583,6 @@ void WallpaperEngine::play()
     if (!d->cfg || !d->cfg->enabled())
         return;
 
-    qWarning() << "[meme-wallpaper] play: widgets=" << d->widgets.size() << "screenVideo=" << d->screenVideo.size();
     show();
 
     for (QWidget *root : ddplugin_meme_util::desktopFrameRootWindows()) {
@@ -625,14 +600,11 @@ void WallpaperEngine::play()
 
 void WallpaperEngine::show()
 {
-    qWarning() << "[meme-wallpaper] show: widgets=" << d->widgets.size();
     dpfSlotChannel->push("ddplugin_core", "slot_DesktopFrame_LayoutWidget");
     for (const VideoProxyPointer &bwp : d->widgets.values()) {
         if (bwp.isNull())
             continue;
         bwp->show();
-        qWarning() << "[meme-wallpaper] show: proxy shown, isVisible=" << bwp->isVisible()
-                   << "geometry=" << bwp->geometry();
     }
 }
 

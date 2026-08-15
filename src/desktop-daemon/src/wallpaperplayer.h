@@ -27,9 +27,13 @@ private:
     VideoDisplayWidget *m_widget = nullptr;
     QMediaPlayer *m_player = nullptr;
     QVideoSink *m_sink = nullptr;
+    QString m_savedWallpaper;
+    bool m_wallpaperReplaced = false;
 
     void ensureWidget();
     void applyGeometry();
+    void setStaticWallpaperTransparent();
+    void restoreStaticWallpaper();
 };
 
 #endif // WALLPAPERPLAYER_H

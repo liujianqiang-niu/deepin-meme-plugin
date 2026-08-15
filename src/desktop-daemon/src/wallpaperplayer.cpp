@@ -13,6 +13,8 @@
 #include <QPaintEvent>
 #include <QFile>
 #include <QTimer>
+#include <QDBusInterface>
+#include <QDBusMessage>
 #include <QLoggingCategory>
 
 #ifndef QT_NO_X11
@@ -21,6 +23,8 @@
 #endif
 
 Q_LOGGING_CATEGORY(memeWallpaper, "meme.wallpaper")
+
+static const char *kTransparentWallpaper = "/usr/share/deepin-meme-wallpapers/transparent.png";
 
 class VideoDisplayWidget : public QWidget
 {
@@ -64,6 +68,7 @@ WallpaperPlayer::WallpaperPlayer(QObject *parent)
 WallpaperPlayer::~WallpaperPlayer()
 {
     qCInfo(memeWallpaper) << "WallpaperPlayer destroyed";
+    restoreStaticWallpaper();
     delete m_player;
     delete m_widget;
 }
@@ -75,7 +80,7 @@ void WallpaperPlayer::ensureWidget()
     qCInfo(memeWallpaper) << "Creating video display widget...";
 
     m_widget = new VideoDisplayWidget();
-    m_widget->setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnBottomHint);
+    m_widget->setWindowFlags(Qt::FramelessWindowHint);
 
     m_player = new QMediaPlayer(this);
     m_sink = new QVideoSink(this);
@@ -88,23 +93,33 @@ void WallpaperPlayer::ensureWidget()
         qCWarning(memeWallpaper) << "Media error:" << error << errorString;
     });
 
-    // Qt::FramelessWindowHint makes KWin add _KDE_NET_WM_WINDOW_TYPE_OVERRIDE,
-    // which causes the compositor to skip the window entirely. Force NORMAL type
-    // via X11 so the compositor composites the painted video frames. Must be
-    // done after native window creation (winId()) but before show().
+    // Set _NET_WM_WINDOW_TYPE_DESKTOP so KWin places the window in the desktop
+    // layer (same as dde-desktop), making it behave as wallpaper background.
+    // Also add _NET_WM_STATE_SKIP_TASKBAR and _NET_WM_STATE_SKIP_PAGER to hide
+    // it from taskbar and pager. Must be set after native window creation
+    // (winId()) but before show() — KWin reads these at map time.
     (void)m_widget->winId();
 #ifndef QT_NO_X11
     {
         Display *dpy = XOpenDisplay(nullptr);
         if (dpy) {
             Window winId = static_cast<Window>(m_widget->winId());
+
             Atom netWmWindowType = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE", False);
-            Atom netWmWindowTypeNormal = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_NORMAL", False);
+            Atom netWmWindowTypeDesktop = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DESKTOP", False);
             XChangeProperty(dpy, winId, netWmWindowType, XA_ATOM, 32, PropModeReplace,
-                            reinterpret_cast<unsigned char *>(&netWmWindowTypeNormal), 1);
+                            reinterpret_cast<unsigned char *>(&netWmWindowTypeDesktop), 1);
+
+            Atom netWmState = XInternAtom(dpy, "_NET_WM_STATE", False);
+            Atom skipTaskbar = XInternAtom(dpy, "_NET_WM_STATE_SKIP_TASKBAR", False);
+            Atom skipPager = XInternAtom(dpy, "_NET_WM_STATE_SKIP_PAGER", False);
+            Atom states[] = { skipTaskbar, skipPager };
+            XChangeProperty(dpy, winId, netWmState, XA_ATOM, 32, PropModeReplace,
+                            reinterpret_cast<unsigned char *>(states), 2);
+
             XFlush(dpy);
             XCloseDisplay(dpy);
-            qCInfo(memeWallpaper) << "Set NORMAL window type on" << Qt::hex << winId;
+            qCInfo(memeWallpaper) << "Set DESKTOP window type + SKIP_TASKBAR/PAGER on" << Qt::hex << winId;
         }
     }
 #endif
@@ -137,6 +152,50 @@ void WallpaperPlayer::applyGeometry()
     }
 }
 
+void WallpaperPlayer::setStaticWallpaperTransparent()
+{
+    if (m_wallpaperReplaced) return;
+
+    auto msg = QDBusMessage::createMethodCall(
+        "org.deepin.dde.Appearance1", "/org/deepin/dde/Appearance1",
+        "org.deepin.dde.Appearance1", "GetCurrentWorkspaceBackground");
+    QDBusMessage reply = QDBusConnection::sessionBus().call(msg);
+    if (reply.type() == QDBusMessage::ReplyMessage && !reply.arguments().isEmpty()) {
+        QString current = reply.arguments().first().toString();
+        if (current.contains("transparent.png")) {
+            qCInfo(memeWallpaper) << "Current wallpaper is already transparent, not saving";
+        } else {
+            m_savedWallpaper = current;
+            qCInfo(memeWallpaper) << "Saved current wallpaper:" << m_savedWallpaper;
+        }
+    }
+
+    msg = QDBusMessage::createMethodCall(
+        "org.deepin.dde.Appearance1", "/org/deepin/dde/Appearance1",
+        "org.deepin.dde.Appearance1", "SetCurrentWorkspaceBackground");
+    msg << QString("file://%1").arg(kTransparentWallpaper);
+    QDBusConnection::sessionBus().call(msg);
+    m_wallpaperReplaced = true;
+    qCInfo(memeWallpaper) << "Set static wallpaper to transparent PNG";
+}
+
+void WallpaperPlayer::restoreStaticWallpaper()
+{
+    if (!m_wallpaperReplaced) return;
+
+    auto msg = QDBusMessage::createMethodCall(
+        "org.deepin.dde.Appearance1", "/org/deepin/dde/Appearance1",
+        "org.deepin.dde.Appearance1", "SetCurrentWorkspaceBackground");
+    if (m_savedWallpaper.isEmpty()) {
+        msg << "file:///usr/share/backgrounds/default_background.jpg";
+    } else {
+        msg << m_savedWallpaper;
+    }
+    QDBusConnection::sessionBus().call(msg);
+    m_wallpaperReplaced = false;
+    qCInfo(memeWallpaper) << "Restored static wallpaper:" << m_savedWallpaper;
+}
+
 void WallpaperPlayer::setVideo(const QString &path)
 {
     qCInfo(memeWallpaper) << "setVideo called:" << path;
@@ -152,6 +211,7 @@ void WallpaperPlayer::setVideo(const QString &path)
 
     ensureWidget();
     applyGeometry();
+    setStaticWallpaperTransparent();
 
     m_player->setSource(QUrl::fromLocalFile(path));
     m_player->play();
@@ -169,6 +229,7 @@ void WallpaperPlayer::stop()
         m_widget->hide();
         qCInfo(memeWallpaper) << "Window hidden";
     }
+    restoreStaticWallpaper();
 }
 
 #include "wallpaperplayer.moc"

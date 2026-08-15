@@ -27,10 +27,12 @@ add_subdirectory(src/common)
 add_subdirectory(src/control-center-plugin)
 add_subdirectory(src/desktop-daemon)
 
-# 安装 5 个动态壁纸 mp4
+# 安装动态壁纸 mp4 和透明 PNG
 install(DIRECTORY data/res/
     DESTINATION ${MEME_WALLPAPER_DIR}
     FILES_MATCHING PATTERN "*.mp4")
+install(FILES data/res/transparent.png
+    DESTINATION ${MEME_WALLPAPER_DIR})
 
 # DConfig schema
 dtk_add_config_meta_files(APPID org.deepin.meme FILES data/configs/org.deepin.meme.json)

@@ -18,7 +18,6 @@ DCORE_USE_NAMESPACE
 Q_LOGGING_CATEGORY(memePlugin, "meme.plugin")
 
 static const char *kAppId = "org.deepin.meme";
-static const char *kPresetDir = "/usr/share/deepin-meme-wallpapers";
 
 MemePlugin::MemePlugin(QObject *parent)
     : QObject(parent)
@@ -39,15 +38,23 @@ MemePlugin::MemePlugin(QObject *parent)
         if (success) {
             qCInfo(memePlugin) << "convert success:" << out;
             m_model->refresh();
-            // 不自动应用壁纸，让用户自己从列表中选择并点"应用"
-            // 之前自动 applyWallpaper 导致 edge 插件在文件刚写入时打开失败
+            setStatusMessage(tr("转码完成，可在列表中选择并应用"));
         } else {
             qCWarning(memePlugin) << "convert failed:" << err;
+            setStatusMessage(tr("转码失败") + ": " + err);
         }
     });
 }
 
 MemePlugin::~MemePlugin() = default;
+
+void MemePlugin::setStatusMessage(const QString &msg)
+{
+    if (m_statusMessage != msg) {
+        m_statusMessage = msg;
+        emit statusMessageChanged();
+    }
+}
 
 void MemePlugin::readConfig()
 {
@@ -87,7 +94,6 @@ void MemePlugin::setEnabled(bool e)
         m_enabled = e;
         emit enabledChanged(e);
         writeConfigEnabled(e);
-        // edge 插件监听 DConfig valueChanged 自动启停，无需 D-Bus
     }
 }
 
@@ -108,6 +114,8 @@ bool MemePlugin::converting() const { return m_converter->isConverting(); }
 
 int MemePlugin::convertProgress() const { return m_convertProgress; }
 
+QString MemePlugin::statusMessage() const { return m_statusMessage; }
+
 void MemePlugin::applyWallpaper(const QString &path)
 {
     qCInfo(memePlugin) << "applyWallpaper:" << path;
@@ -117,6 +125,7 @@ void MemePlugin::applyWallpaper(const QString &path)
         emit enabledChanged(true);
         writeConfigEnabled(true);
     }
+    setStatusMessage(tr("已应用动态壁纸"));
 }
 
 QUrl MemePlugin::urlFromPath(const QString &path) const
@@ -129,6 +138,7 @@ void MemePlugin::uploadVideo(const QUrl &url)
     const QString localPath = url.toLocalFile();
     if (localPath.isEmpty()) {
         qCWarning(memePlugin) << "uploadVideo: invalid url" << url;
+        setStatusMessage(tr("无效的文件路径"));
         return;
     }
 
@@ -136,19 +146,22 @@ void MemePlugin::uploadVideo(const QUrl &url)
             + QStringLiteral("/deepin-meme-wallpapers");
     QDir().mkpath(userDir);
 
-    // 检查格式：H264 直接复制，非 H264 转码
     if (VideoConverter::checkFormat(localPath)) {
         const QString dest = QDir(userDir).filePath(QFileInfo(localPath).fileName());
         if (QFile::exists(dest))
             QFile::remove(dest);
+        setStatusMessage(tr("正在复制视频..."));
         if (QFile::copy(localPath, dest)) {
             qCInfo(memePlugin) << "copied H264 video:" << dest;
             m_model->refresh();
+            setStatusMessage(tr("上传完成，可在列表中选择并应用"));
         } else {
             qCWarning(memePlugin) << "copy failed:" << dest;
+            setStatusMessage(tr("复制文件失败"));
         }
     } else {
         qCInfo(memePlugin) << "starting conversion for" << localPath;
+        setStatusMessage(tr("正在转码为 H264..."));
         m_convertProgress = 0;
         emit convertingChanged();
         emit convertProgressChanged();
@@ -167,6 +180,9 @@ void MemePlugin::removeUserWallpaper(int index)
             emit enabledChanged(false);
             writeConfigEnabled(false);
         }
+        setStatusMessage(tr("已删除当前壁纸并停用"));
+    } else {
+        setStatusMessage(tr("已删除壁纸"));
     }
 }
 
@@ -176,6 +192,7 @@ void MemePlugin::cancelConvert()
     m_convertProgress = 0;
     emit convertProgressChanged();
     emit convertingChanged();
+    setStatusMessage(tr("已取消转码"));
 }
 
 DCC_FACTORY_CLASS(MemePlugin)

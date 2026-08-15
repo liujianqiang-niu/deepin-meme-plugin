@@ -646,11 +646,14 @@ void WallpaperEngine::catchImage(const QImage &img)
 
 void WallpaperEngine::onOptionsChanged()
 {
-    if (!d->cfg || !d->cfg->enabled())
+    if (!d->cfg)
         return;
 
-    // DConfig 变化时：重建播放（解码/填充模式切换）
-    // 下发 fillMode 到所有 proxy
+    if (!d->cfg->enabled()) {
+        turnOff();
+        return;
+    }
+
     const FillMode fill = d->cfg->fillMode();
     for (const VideoProxyPointer &w : d->widgets) {
         if (!w.isNull())

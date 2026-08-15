@@ -86,6 +86,7 @@ void VideoConverter::convert(const QString &inputPath, const QString &outputDir)
             qInfo() << "[meme-converter] convert success:" << outPath;
             emit finished(true, outPath, {});
         } else {
+            QFile::remove(outPath);
             const QString err = QString::fromUtf8(m_process->readAllStandardError());
             qWarning() << "[meme-converter] convert failed:" << code << err;
             emit finished(false, {}, err);
@@ -126,12 +127,43 @@ int VideoConverter::queryTotalFrames(const QString &path) const
     QProcess proc;
     proc.start(QStringLiteral("ffprobe"),
                { QStringLiteral("-v"), QStringLiteral("error"),
+                 QStringLiteral("-count_packets"),
                  QStringLiteral("-select_streams"), QStringLiteral("v:0"),
-                 QStringLiteral("-show_entries"), QStringLiteral("stream=nb_frames"),
+                 QStringLiteral("-show_entries"), QStringLiteral("stream=nb_read_packets"),
                  QStringLiteral("-of"), QStringLiteral("default=noprint_wrappers=1:nokey=1"),
                  path });
-    if (!proc.waitForFinished(5000))
+    if (!proc.waitForFinished(10000))
         return 0;
     const QString result = QString::fromUtf8(proc.readAllStandardOutput()).trimmed();
-    return result.toInt();
+    bool ok = false;
+    int frames = result.toInt(&ok);
+    if (ok && frames > 0)
+        return frames;
+
+    // Fallback: estimate from duration * fps
+    QProcess proc2;
+    proc2.start(QStringLiteral("ffprobe"),
+                { QStringLiteral("-v"), QStringLiteral("error"),
+                  QStringLiteral("-select_streams"), QStringLiteral("v:0"),
+                  QStringLiteral("-show_entries"), QStringLiteral("stream=avg_frame_rate,duration"),
+                  QStringLiteral("-of"), QStringLiteral("default=noprint_wrappers=1"),
+                  path });
+    if (!proc2.waitForFinished(5000))
+        return 0;
+    const QString info = QString::fromUtf8(proc2.readAllStandardOutput()).trimmed();
+    double fps = 0.0, dur = 0.0;
+    for (const QString &line : info.split('\n')) {
+        if (line.startsWith("avg_frame_rate=")) {
+            const QString frac = line.mid(15);
+            const int slash = frac.indexOf('/');
+            if (slash > 0) {
+                const int num = frac.left(slash).toInt();
+                const int den = frac.mid(slash + 1).toInt();
+                if (den > 0) fps = double(num) / double(den);
+            }
+        }
+        if (line.startsWith("duration="))
+            dur = line.mid(9).toDouble();
+    }
+    return fps > 0 && dur > 0 ? int(fps * dur) : 0;
 }

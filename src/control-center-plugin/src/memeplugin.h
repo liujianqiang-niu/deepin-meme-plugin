@@ -18,6 +18,7 @@ class MemePlugin : public QObject
     Q_PROPERTY(WallpaperModel *wallpaperModel READ wallpaperModel CONSTANT)
     Q_PROPERTY(bool converting READ converting NOTIFY convertingChanged)
     Q_PROPERTY(int convertProgress READ convertProgress NOTIFY convertProgressChanged)
+    Q_PROPERTY(QString statusMessage READ statusMessage NOTIFY statusMessageChanged)
 
 public:
     explicit MemePlugin(QObject *parent = nullptr);
@@ -32,6 +33,7 @@ public:
     WallpaperModel *wallpaperModel() const;
     bool converting() const;
     int convertProgress() const;
+    QString statusMessage() const;
 
     Q_INVOKABLE void applyWallpaper(const QString &path);
     Q_INVOKABLE QUrl urlFromPath(const QString &path) const;
@@ -44,6 +46,7 @@ signals:
     void currentVideoChanged(const QString &);
     void convertingChanged();
     void convertProgressChanged();
+    void statusMessageChanged();
 
 private:
     WallpaperModel *m_model = nullptr;
@@ -52,7 +55,9 @@ private:
     bool m_enabled = false;
     QString m_currentVideo;
     int m_convertProgress = 0;
+    QString m_statusMessage;
 
+    void setStatusMessage(const QString &msg);
     void readConfig();
     void writeConfigEnabled(bool e);
     void writeConfigCurrentVideo(const QString &path);

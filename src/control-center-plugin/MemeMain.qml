@@ -22,7 +22,7 @@ DccObject {
         }
     }
 
-    // ─── 上传视频 ───
+    // ─── 上传视频 + 进度 ───
     DccObject {
         name: "memeUpload"
         parentName: "meme"
@@ -39,18 +39,19 @@ DccObject {
 
                 Button {
                     text: qsTr("选择视频上传")
+                    enabled: !dccData.converting
                     onClicked: fileDialog.open()
                 }
 
                 Text {
-                    text: qsTr("支持 H264 MP4，其他格式自动转码")
+                    text: qsTr("支持 H264 MP4，其他格式自动转码为 H264")
                     color: "#888"
                     font.pixelSize: 12
                     Layout.fillWidth: true
                 }
             }
 
-            // 转码进度条
+            // 进度条（转码时显示）
             ProgressBar {
                 Layout.fillWidth: true
                 visible: dccData.converting
@@ -59,17 +60,32 @@ DccObject {
                 value: dccData.convertProgress
             }
 
-            Text {
+            // 进度文字
+            RowLayout {
                 visible: dccData.converting
-                text: qsTr("正在转码... %1%").arg(dccData.convertProgress)
-                color: "#4a90d9"
-                font.pixelSize: 12
+                spacing: 8
+
+                Text {
+                    text: qsTr("正在转码... %1%").arg(dccData.convertProgress)
+                    color: "#4a90d9"
+                    font.pixelSize: 12
+                    Layout.fillWidth: true
+                }
+
+                Button {
+                    text: qsTr("取消")
+                    onClicked: dccData.cancelConvert()
+                }
             }
 
-            Button {
-                visible: dccData.converting
-                text: qsTr("取消")
-                onClicked: dccData.cancelConvert()
+            // 状态消息（上传完成/失败/已删除等）
+            Text {
+                visible: dccData.statusMessage.length > 0
+                text: dccData.statusMessage
+                color: dccData.converting ? "#4a90d9" : "#66a0d0"
+                font.pixelSize: 12
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
             }
 
             FileDialog {
@@ -81,7 +97,7 @@ DccObject {
         }
     }
 
-    // ─── 预览 + 壁纸列表（合并到同一 DccObject，previewVideo id 可在 delegate 中引用）───
+    // ─── 预览 + 壁纸列表（合并到同一 DccObject）───
     DccObject {
         name: "memeWallpaper"
         parentName: "meme"
@@ -115,7 +131,7 @@ DccObject {
 
                 Text {
                     anchors.centerIn: parent
-                    text: qsTr("点击列表中的预览按钮查看效果")
+                    text: qsTr("点击列表中的「预览」按钮查看效果")
                     color: "#666"
                     font.pixelSize: 14
                     visible: !previewVideo.visible
@@ -126,10 +142,10 @@ DccObject {
             GridView {
                 id: wallpaperGrid
                 Layout.fillWidth: true
-                Layout.preferredHeight: Math.ceil(count / 3) * 130 + 20
+                Layout.preferredHeight: Math.ceil(count / 3) * 140 + 20
                 model: dccData.wallpaperModel
                 cellWidth: width / 3 - 4
-                cellHeight: 130
+                cellHeight: 140
                 interactive: false
                 clip: true
 
@@ -146,7 +162,6 @@ DccObject {
                         anchors.margins: 6
                         spacing: 4
 
-                        // 缩略图占位
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 50

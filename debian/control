@@ -16,6 +16,7 @@ Build-Depends: debhelper-compat (= 13),
     libavutil-dev,
     libswscale-dev,
     dde-file-manager,
+    dde-file-manager-dev,
     dde-control-center-dev
 Standards-Version: 4.6.2
 Homepage: https://www.deepin.org

@@ -1,7 +1,7 @@
 # deepin-meme-plugin
 
 > 项目：deepin-meme-plugin —— Deepin / UOS v25 动态视频壁纸插件
-> 版本：v3.0.0（首次发布）
+> 版本：v3.1.0
 > 许可：GPL-3.0-or-later
 > 维护：liujianqiang@uniontech.com
 
@@ -185,7 +185,7 @@ dpkg-buildpackage -us -uc -b
 
 | 组件 | 路径 |
 |---|---|
-| 边缘插件 | `/usr/lib/<arch>/dde-file-manager/plugins/desktop-edge/libdd-meme-wallpaper-plugin.so.3.0.0` |
+| 边缘插件 | `/usr/lib/<arch>/dde-file-manager/plugins/desktop-edge/libdd-meme-wallpaper-plugin.so.3.1.0` |
 | 控制中心插件 | `/usr/lib/<arch>/dde-control-center/plugins_v1.1/meme/` |
 | 预置视频 | `/usr/share/deepin-meme-wallpapers/` |
 | DConfig schema | `/usr/share/dsg/configs/org.deepin.meme/org.deepin.meme.json` |

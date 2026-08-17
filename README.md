@@ -104,7 +104,7 @@ dpkg-buildpackage -us -uc -b
 
 | 组件 | 路径 |
 |---|---|
-| 边缘插件 | `/usr/lib/<arch>/dde-file-manager/plugins/desktop-edge/libdd-meme-wallpaper-plugin.so.3.0.0` |
+| 边缘插件 | `/usr/lib/<arch>/dde-file-manager/plugins/desktop-edge/libdd-meme-wallpaper-plugin.so.3.1.0` |
 | 控制中心插件 | `/usr/lib/<arch>/dde-control-center/plugins_v1.1/meme/meme.so` + `libmeme_qml.so` |
 | 预置视频 | `/usr/share/deepin-meme-wallpapers/` |
 | DConfig schema | `/usr/share/dsg/configs/org.deepin.meme/org.deepin.meme.json` |

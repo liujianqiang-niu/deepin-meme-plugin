@@ -4,17 +4,17 @@
 
 **目标：** 将 deepin-meme-plugin 从独立 daemon + 顶层窗口重构为 dde-file-manager desktop-edge 插件 + 控制中心插件 + DConfig 共享配置，并增加用户上传视频与自动格式转换功能。
 
-**架构：** 三组件：(1) desktop-edge 插件嵌入桌面框架用 FFmpeg 解码渲染视频壁纸 + 右键菜单；(2) 控制中心插件提供 UI 管理和视频上传/转码；(3) DConfig schema 跨进程共享配置。参考实现：`/home/uos/work-ljq/work-v25/code-work/ai-work/deepin_video_wallpaper`。
+**架构：** 三组件：(1) desktop-edge 插件嵌入桌面框架用 FFmpeg 解码渲染视频壁纸 + 右键菜单；(2) 控制中心插件提供 UI 管理和视频上传/转码；(3) DConfig schema 跨进程共享配置。参考实现：`<your-workspace>/deepin_video_wallpaper`。
 
 **技术栈：** Qt6 Widgets, DTK6 Core, FFmpeg (libavformat/libavcodec/libavutil/libswscale), dde-file-manager dfm-framework (dpf::Plugin), dde-control-center dccfactory, DConfig, QProcess (ffmpeg CLI)
 
 **关键源码路径：**
-- dde-file-manager 源码: `/home/uos/work-ljq/work-v25/code-work/ai-work/dde-file-manager`（include 路径）
-- dde-control-center 源码: `/home/uos/work-ljq/work-v25/code-work/ai-work/dde-control-center`（include 路径）
-- 参考实现: `/home/uos/work-ljq/work-v25/code-work/ai-work/deepin_video_wallpaper`
+- dde-file-manager 源码: `<your-workspace>/dde-file-manager`（include 路径）
+- dde-control-center 源码: `<your-workspace>/dde-control-center`（include 路径）
+- 参考实现: `<your-workspace>/deepin_video_wallpaper`
 
-**DCC_SOURCE_ROOT**: `/home/uos/work-ljq/work-v25/code-work/ai-work/dde-control-center`
-**DFM_SOURCE_ROOT**: `/home/uos/work-ljq/work-v25/code-work/ai-work/dde-file-manager`
+**DCC_SOURCE_ROOT**: `<your-workspace>/dde-control-center`
+**DFM_SOURCE_ROOT**: `<your-workspace>/dde-file-manager`
 
 ---
 
@@ -99,10 +99,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-set(DCC_SOURCE_ROOT "/home/uos/work-ljq/work-v25/code-work/ai-work/dde-control-center")
+set(DCC_SOURCE_ROOT "<your-workspace>/dde-control-center")
 set(DCC_INCLUDE_DIR "${DCC_SOURCE_ROOT}/include")
 set(DCC_PLUGIN_DIR "/usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/dde-control-center/plugins_v1.1")
-set(DFM_SOURCE_ROOT "/home/uos/work-ljq/work-v25/code-work/ai-work/dde-file-manager")
+set(DFM_SOURCE_ROOT "<your-workspace>/dde-file-manager")
 set(DFM_INCLUDE_DIR "${DFM_SOURCE_ROOT}/include")
 set(EDGE_PLUGIN_DIR "/usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/dde-file-manager/plugins/desktop-edge")
 set(MEME_WALLPAPER_DIR "/usr/share/deepin-meme-wallpapers")
@@ -436,7 +436,7 @@ Based on deepin_video_wallpaper reference implementation."
 **文件：**
 - 创建：`src/desktop-edge/videoframe.h`, `src/desktop-edge/decoder.h`, `src/desktop-edge/decoder.cpp`
 
-**参考：** 直接从 `/home/uos/work-ljq/work-v25/code-work/ai-work/deepin_video_wallpaper/src/videoframe.h` 和 `videodecoder.h/cpp` 复制并适配命名空间。
+**参考：** 直接从 `<your-workspace>/deepin_video_wallpaper/src/videoframe.h` 和 `videodecoder.h/cpp` 复制并适配命名空间。
 
 - [ ] **步骤 1：创建 videoframe.h**
 

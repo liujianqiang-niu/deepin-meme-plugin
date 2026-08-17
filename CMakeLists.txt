@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.23)
 
 project(deepin-meme-plugin
-    VERSION 3.0.0
+    VERSION 3.1.0
     DESCRIPTION "Deepin dynamic wallpaper plugin"
     LANGUAGES CXX
 )

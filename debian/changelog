@@ -1,3 +1,17 @@
+deepin-meme-plugin (3.1.0) unstable; urgency=medium
+
+  * Make DCC/DFM include paths configurable with system fallback (no hardcoded
+    local checkout paths in CMakeLists.txt)
+  * Add dde-file-manager-dev to debian/control Build-Depends
+  * Fix: wallpaper grid delegate overflow on narrow control center windows
+    (uploaded items' buttons ran outside the delegate Rectangle)
+  * Fix: wallpaper grid buttons squeezed/overlapped when window was narrowed
+    (buttons now scale with cellWidth via Layout.fillWidth)
+  * Drop hardcoded /home/uos local paths from docs/superpowers/plans
+  * Untrack debian/debhelper-build-stamp (already in .gitignore)
+
+ -- liujianqiang <liujianqiang@uniontech.com>  Mon, 17 Aug 2026 09:42:09 +0800
+
 deepin-meme-plugin (3.0.0) unstable; urgency=medium
 
   * Rewrite: edge plugin (FFmpeg decode + desktop render + right-click menu)

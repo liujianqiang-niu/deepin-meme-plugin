@@ -15,19 +15,14 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
 # ─── DCC (dde-control-center) 头文件路径 ───
-# 优先级: -DDCC_SOURCE_ROOT=... > $ENV{DCC_SOURCE_ROOT} > 本机默认 checkout 路径 > 系统安装头文件
-# 本机默认路径存在时优先用它（开发期拿到最新未发布的 dde-control-center 头文件）；
-# 路径不存在时（例如在远程机构建或本机没 checkout）自动 fallback 到系统安装的
-# dde-control-center-dev 包提供的 /usr/include/dde-control-center。
-if(NOT DEFINED DCC_SOURCE_ROOT)
-    if(DEFINED ENV{DCC_SOURCE_ROOT})
-        set(DCC_SOURCE_ROOT "$ENV{DCC_SOURCE_ROOT}")
-    else()
-        set(DCC_SOURCE_ROOT "/home/uos/work-ljq/work-v25/code-work/ai-work/dde-control-center")
-    endif()
-endif()
-if(EXISTS "${DCC_SOURCE_ROOT}/include")
+# 默认使用系统安装的 dde-control-center-dev 包提供的 /usr/include/dde-control-center。
+# 如需用 in-tree 源码 checkout 的头文件（开发期拿到最新未发布版本），请显式提供：
+#   cmake -B build -DDCC_SOURCE_ROOT=/path/to/dde-control-center
+#   或: export DCC_SOURCE_ROOT=/path/to/dde-control-center
+if(DEFINED DCC_SOURCE_ROOT AND EXISTS "${DCC_SOURCE_ROOT}/include")
     set(DCC_INCLUDE_DIR "${DCC_SOURCE_ROOT}/include")
+elseif(DEFINED ENV{DCC_SOURCE_ROOT} AND EXISTS "$ENV{DCC_SOURCE_ROOT}/include")
+    set(DCC_INCLUDE_DIR "$ENV{DCC_SOURCE_ROOT}/include")
 else()
     find_path(DCC_INCLUDE_DIR
         NAMES dccfactory.h
@@ -38,20 +33,16 @@ endif()
 set(DCC_PLUGIN_DIR "/usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/dde-control-center/plugins_v1.1")
 
 # ─── DFM (dde-file-manager) 头文件路径 ───
-# 优先级: -DDFM_SOURCE_ROOT=... > $ENV{DFM_SOURCE_ROOT} > 本机默认 checkout 路径 > 系统安装头文件
-# 本机默认路径存在时优先用它（开发期拿到最新未发布的 dde-file-manager 头文件）；
-# 路径不存在时自动 fallback 到系统安装的 dde-file-manager-dev 包提供的 /usr/include。
-if(NOT DEFINED DFM_SOURCE_ROOT)
-    if(DEFINED ENV{DFM_SOURCE_ROOT})
-        set(DFM_SOURCE_ROOT "$ENV{DFM_SOURCE_ROOT}")
-    else()
-        set(DFM_SOURCE_ROOT "/home/uos/work-ljq/work-v25/code-work/ai-work/dde-file-manager")
-    endif()
-endif()
-if(EXISTS "${DFM_SOURCE_ROOT}/include")
+# 默认使用系统安装的 dde-file-manager-dev 包提供的 /usr/include/dfm-base
+# 和 /usr/include/dfm-framework。如需用 in-tree 源码 checkout 的头文件，
+# 请显式提供：
+#   cmake -B build -DDFM_SOURCE_ROOT=/path/to/dde-file-manager
+#   或: export DFM_SOURCE_ROOT=/path/to/dde-file-manager
+if(DEFINED DFM_SOURCE_ROOT AND EXISTS "${DFM_SOURCE_ROOT}/include")
     set(DFM_INCLUDE_DIR "${DFM_SOURCE_ROOT}/include")
+elseif(DEFINED ENV{DFM_SOURCE_ROOT} AND EXISTS "$ENV{DFM_SOURCE_ROOT}/include")
+    set(DFM_INCLUDE_DIR "$ENV{DFM_SOURCE_ROOT}/include")
 else()
-    # dde-file-manager-dev 把头文件直接装到 /usr/include/dfm-base 和 /usr/include/dfm-framework
     find_path(DFM_INCLUDE_DIR
         NAMES dfm-base/dfm_log_defines.h
         PATHS /usr/include

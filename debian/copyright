@@ -1,6 +1,6 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: deepin-meme-plugin
-Upstream-Contact: Deepin Desktop Environment Team <uos@uniontech.com>
+Upstream-Contact: liujianqiang <liujianqiang@uniontech.com>
 Source: https://github.com/linuxdeepin/deepin-meme-plugin
 
 Files: *

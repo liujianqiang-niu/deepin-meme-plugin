@@ -1,7 +1,7 @@
 Source: deepin-meme-plugin
 Section: utils
 Priority: optional
-Maintainer: Deepin Desktop Environment Team <uos@uniontech.com>
+Maintainer: liujianqiang <liujianqiang@uniontech.com>
 Build-Depends: debhelper-compat (= 13),
     cmake (>= 3.23),
     pkg-config,

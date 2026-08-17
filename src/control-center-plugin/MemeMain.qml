@@ -153,6 +153,7 @@ DccObject {
                     width: wallpaperGrid.cellWidth - 4
                     height: wallpaperGrid.cellHeight - 4
                     radius: 6
+                    clip: true
                     color: model.path === dccData.currentVideo ? "#2b5d8a" : "#1e2a3a"
                     border.color: model.path === dccData.currentVideo ? "#4a90d9" : "#333"
                     border.width: 1
@@ -186,10 +187,12 @@ DccObject {
 
                         RowLayout {
                             spacing: 4
+                            Layout.fillWidth: true
 
                             Button {
                                 text: qsTr("预览")
                                 font.pixelSize: 10
+                                Layout.fillWidth: true
                                 onClicked: {
                                     previewVideo.source = dccData.urlFromPath(model.path)
                                     previewVideo.play()
@@ -200,6 +203,7 @@ DccObject {
                                 text: qsTr("应用")
                                 enabled: model.path !== dccData.currentVideo
                                 font.pixelSize: 10
+                                Layout.fillWidth: true
                                 onClicked: dccData.applyWallpaper(model.path)
                             }
 
@@ -207,6 +211,7 @@ DccObject {
                                 text: qsTr("删除")
                                 visible: !model.isPreset
                                 font.pixelSize: 10
+                                Layout.fillWidth: true
                                 onClicked: dccData.removeUserWallpaper(index)
                             }
                         }

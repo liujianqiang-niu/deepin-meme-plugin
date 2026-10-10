@@ -140,19 +140,61 @@ void WallpaperEnginePrivate::setPlaybackSuspended(bool suspended, const char *re
     if (playbackSuspended == suspended)
         return;
     playbackSuspended = suspended;
-    qInfo() << "[meme-wallpaper] playback" << (suspended ? "SUSPEND" : "RESUME")
+    qWarning() << "[meme-wallpaper] playback" << (suspended ? "SUSPEND" : "RESUME")
             << "reason=" << reason;
     if (!cfg || !cfg->enabled())
         return;
     if (suspended) {
-        stopSharedDecoders();
+        // 保活：只冻结解码器（不销毁），恢复时无需重开文件 / 重建硬解
+        for (VideoDecoder *dec : decoders) {
+            if (dec)
+                dec->setPaused(true);
+        }
         for (const VideoProxyPointer &w : widgets) {
             if (!w.isNull())
-                w->stop();
+                w->freeze();     // 保留最后一帧，避免取消遮挡瞬间黑屏
+        }
+    } else if (!decoders.isEmpty() && !resumeNeedsRebuild) {
+        // 快路径：解码器仍在且无来源变化 → 直接解冻、立即继续
+        for (const VideoProxyPointer &w : widgets) {
+            if (!w.isNull())
+                w->show();
+        }
+        for (auto it = screenVideo.constBegin(); it != screenVideo.constEnd(); ++it) {
+            if (isScreenActive(it.key()))
+                setBackgroundVisibleFor(it.key(), false);
+        }
+        for (VideoDecoder *dec : decoders) {
+            if (dec)
+                dec->setPaused(false);
         }
     } else {
-        startDebounce->start();
+        // 无解码器，或暂停期间换了壁纸/改了配置 → 完整重建
+        resumeNeedsRebuild = false;
+        startPlayers();
     }
+}
+
+void WallpaperEnginePrivate::checkVisibility()
+{
+    if (!cfg || !cfg->enabled() || sessionLocked || screenSaverActive)
+        return;
+    // 是否把“最大化”也算被盖住（DConfig: pauseOnMaximized，默认 false=只认全屏）
+    fullscreenWatch.setCountMaximized(cfg->pauseOnMaximized());
+    // 有全屏(或最大化)窗口盖住的输出 → 视为不可见，暂停解码（wlr-foreign-toplevel）
+    const QSet<QString> covered = fullscreenWatch.fullscreenOutputs();
+    bool anyVisible = false;
+    for (auto it = widgets.constBegin(); it != widgets.constEnd(); ++it) {
+        if (!it.value().isNull() && it.value()->isVisible()
+            && isScreenActive(it.key()) && !covered.contains(it.key())) {
+            anyVisible = true;
+            break;
+        }
+    }
+    if (!anyVisible && !decoders.isEmpty())
+        setPlaybackSuspended(true, "all-hidden-or-covered");
+    else if (anyVisible && playbackSuspended && !sessionLocked && !screenSaverActive)
+        setPlaybackSuspended(false, "widget-visible");
 }
 
 void WallpaperEnginePrivate::setupPowerHooks()
@@ -178,25 +220,17 @@ void WallpaperEnginePrivate::setupPowerHooks()
                     QStringLiteral("ActiveChanged"),
                     q, SLOT(onScreenSaverActiveChanged(bool)));
 
-    // 周期性：控件全不可见则停（被其它全屏盖住/构建间隙）
+    // 事件驱动：窗口状态一变化就立即巡检（wlr 协议回调 → 0ms 定时器合并，避免重入）
+    visibilityKick = new QTimer(q);
+    visibilityKick->setSingleShot(true);
+    visibilityKick->setInterval(0);
+    QObject::connect(visibilityKick, &QTimer::timeout, q, [this]() { checkVisibility(); });
+    fullscreenWatch.setOnChange([this]() { visibilityKick->start(); });
+
+    // 兜底轮询（1s）：覆盖非窗口事件的可见性变化
     visibilityTimer = new QTimer(q);
-    visibilityTimer->setInterval(2000);
-    QObject::connect(visibilityTimer, &QTimer::timeout, q, [this]() {
-        if (!cfg || !cfg->enabled() || sessionLocked || screenSaverActive)
-            return;
-        bool anyVisible = false;
-        for (auto it = widgets.constBegin(); it != widgets.constEnd(); ++it) {
-            if (!it.value().isNull() && it.value()->isVisible()
-                && isScreenActive(it.key())) {
-                anyVisible = true;
-                break;
-            }
-        }
-        if (!anyVisible && !decoders.isEmpty())
-            setPlaybackSuspended(true, "all-widgets-hidden");
-        else if (anyVisible && playbackSuspended && !sessionLocked && !screenSaverActive)
-            setPlaybackSuspended(false, "widget-visible");
-    });
+    visibilityTimer->setInterval(1000);
+    QObject::connect(visibilityTimer, &QTimer::timeout, q, [this]() { checkVisibility(); });
     visibilityTimer->start();
 
     QObject::connect(qApp, &QGuiApplication::applicationStateChanged, q,
@@ -208,9 +242,11 @@ void WallpaperEnginePrivate::setupPowerHooks()
                    && playbackSuspended
                    && !sessionLocked
                    && !screenSaverActive) {
+            const QSet<QString> covered = fullscreenWatch.fullscreenOutputs();
             bool anyVisible = false;
             for (auto it = widgets.constBegin(); it != widgets.constEnd(); ++it) {
-                if (!it.value().isNull() && it.value()->isVisible() && isScreenActive(it.key())) {
+                if (!it.value().isNull() && it.value()->isVisible() && isScreenActive(it.key())
+                    && !covered.contains(it.key())) {
                     anyVisible = true;
                     break;
                 }
@@ -228,8 +264,9 @@ PlayOptions WallpaperEnginePrivate::playOptions() const
     opt.smooth = SmoothLevel::High;       // DConfig 未暴露，默认高平滑
     opt.fill = cfg ? cfg->fillMode() : FillMode::Fill;
     opt.speed = 1.0;                      // DConfig 未暴露，默认原速
-    opt.fps = 0.0;                        // 0 = 跟随源帧率
-    opt.maxWidth = maxScreenWidth();      // 按最大屏物理宽出图
+    opt.fps = cfg ? cfg->fpsCap() : 0.0;  // 0 = 跟随源帧率（DConfig: fpsCap，限帧降功耗）
+    const int rw = cfg ? cfg->renderWidth() : 0;
+    opt.maxWidth = rw > 0 ? rw : maxScreenWidth();  // 0 = 按最大屏物理宽；否则下采样出图
     return opt;
 }
 
@@ -368,6 +405,8 @@ void WallpaperEnginePrivate::stopPlayers()
 void WallpaperEnginePrivate::startPlayers()
 {
     if (playbackSuspended || sessionLocked || screenSaverActive) {
+        // 暂停期间的播放请求（换壁纸/改配置）→ 记下，恢复时完整重建而非简单解冻
+        resumeNeedsRebuild = true;
         qInfo() << "[meme-wallpaper] startPlayers skipped (suspended)";
         return;
     }

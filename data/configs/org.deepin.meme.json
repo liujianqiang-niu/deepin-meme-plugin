@@ -27,13 +27,13 @@
             "type": "string"
         },
         "decodeMode": {
-            "value": "software",
+            "value": "auto",
             "serial": 0,
             "flags": [],
             "name": "decode mode",
             "name[zh_CN]": "解码模式",
-            "description": "software/cuda/vaapi/auto",
-            "description[zh_CN]": "软解/CUDA/VAAPI/自动",
+            "description": "auto/vaapi/vulkan/cuda/software",
+            "description[zh_CN]": "自动/VAAPI(Intel·AMD·通用)/Vulkan(跨厂商·国产)/CUDA(NVIDIA)/软件",
             "permissions": "readwrite",
             "visibility": "public",
             "type": "string"
@@ -49,6 +49,42 @@
             "permissions": "readwrite",
             "visibility": "public",
             "type": "string"
+        },
+        "pauseOnMaximized": {
+            "value": false,
+            "serial": 0,
+            "flags": [],
+            "name": "pause when maximized",
+            "name[zh_CN]": "最大化窗口时也暂停",
+            "description": "false: pause only when a fullscreen window covers the output; true: maximized windows also pause it (note: transparent windows still show the wallpaper)",
+            "description[zh_CN]": "false：仅当全屏窗口盖住该输出时暂停；true：最大化窗口也暂停（注意：半透明窗口其实还能看见壁纸）",
+            "permissions": "readwrite",
+            "visibility": "public",
+            "type": "bool"
+        },
+        "fpsCap": {
+            "value": 0,
+            "serial": 0,
+            "flags": [],
+            "name": "frame rate cap",
+            "name[zh_CN]": "帧率上限",
+            "description": "Cap the wallpaper refresh rate to reduce CPU/GPU load; 0 = follow source frame rate",
+            "description[zh_CN]": "限制壁纸刷新帧率以降低 CPU/GPU 占用；0 = 跟随源帧率",
+            "permissions": "readwrite",
+            "visibility": "public",
+            "type": "int"
+        },
+        "renderWidth": {
+            "value": 0,
+            "serial": 0,
+            "flags": [],
+            "name": "render width",
+            "name[zh_CN]": "渲染宽度",
+            "description": "Downscale the wallpaper to this width in pixels to reduce CPU/GPU load; 0 = screen width",
+            "description[zh_CN]": "把壁纸下采样到该宽度（像素）以降低 CPU/GPU 占用；0 = 按屏幕宽度",
+            "permissions": "readwrite",
+            "visibility": "public",
+            "type": "int"
         }
     }
 }

@@ -22,6 +22,12 @@ VideoConverter::~VideoConverter()
 
 bool VideoConverter::checkFormat(const QString &path)
 {
+    // 容器：壁纸列表只扫描 *.mp4，非 MP4 容器统一走转码
+    if (QFileInfo(path).suffix().compare(QLatin1String("mp4"), Qt::CaseInsensitive) != 0) {
+        qInfo() << "[meme-converter] non-mp4 container, will convert:" << path;
+        return false;
+    }
+
     QProcess proc;
     proc.start(QStringLiteral("ffprobe"),
                { QStringLiteral("-v"), QStringLiteral("error"),
@@ -35,7 +41,9 @@ bool VideoConverter::checkFormat(const QString &path)
     }
     const QString codec = QString::fromUtf8(proc.readAllStandardOutput()).trimmed();
     qInfo() << "[meme-converter] codec:" << codec << "path:" << path;
-    return codec == QStringLiteral("h264");
+    // 编码：H264 / HEVC 直接入库，无需重编码
+    // （本机 GPU 可 VAAPI 硬解 HEVC；其它编码如 VP9/AV1 无法硬解或不被列表支持，仍走转码）
+    return codec == QStringLiteral("h264") || codec == QStringLiteral("hevc");
 }
 
 void VideoConverter::convert(const QString &inputPath, const QString &outputDir)

@@ -53,7 +53,7 @@ DecodeMode MemeConfig::decodeMode() const
 {
     if (!m_cfg)
         return DecodeMode::Auto;
-    return decodeModeFromString(m_cfg->value("decodeMode", "software").toString());
+    return decodeModeFromString(m_cfg->value("decodeMode", "auto").toString());
 }
 
 FillMode MemeConfig::fillMode() const
@@ -61,6 +61,27 @@ FillMode MemeConfig::fillMode() const
     if (!m_cfg)
         return FillMode::Fill;
     return fillModeFromString(m_cfg->value("fillMode", "fill").toString());
+}
+
+bool MemeConfig::pauseOnMaximized() const
+{
+    if (!m_cfg)
+        return false;
+    return m_cfg->value("pauseOnMaximized", false).toBool();
+}
+
+double MemeConfig::fpsCap() const
+{
+    if (!m_cfg)
+        return 0.0;
+    return m_cfg->value("fpsCap", 0.0).toDouble();
+}
+
+int MemeConfig::renderWidth() const
+{
+    if (!m_cfg)
+        return 0;
+    return m_cfg->value("renderWidth", 0).toInt();
 }
 
 // --- 写入 ---
@@ -89,6 +110,24 @@ void MemeConfig::setFillMode(FillMode mode)
         m_cfg->setValue("fillMode", fillModeToString(mode));
 }
 
+void MemeConfig::setPauseOnMaximized(bool b)
+{
+    if (m_cfg)
+        m_cfg->setValue("pauseOnMaximized", b);
+}
+
+void MemeConfig::setFpsCap(double fps)
+{
+    if (m_cfg)
+        m_cfg->setValue("fpsCap", fps);
+}
+
+void MemeConfig::setRenderWidth(int w)
+{
+    if (m_cfg)
+        m_cfg->setValue("renderWidth", w);
+}
+
 // --- 字符串 ↔ 枚举转换 ---
 
 DecodeMode MemeConfig::decodeModeFromString(const QString &s)
@@ -98,11 +137,13 @@ DecodeMode MemeConfig::decodeModeFromString(const QString &s)
         return DecodeMode::Cuda;
     if (v == "vaapi")
         return DecodeMode::Vaapi;
+    if (v == "vulkan")
+        return DecodeMode::Vulkan;
     if (v == "software")
         return DecodeMode::Software;
     if (v == "auto")
         return DecodeMode::Auto;
-    return DecodeMode::Software;  // 默认软解，最兼容
+    return DecodeMode::Auto;  // 未知值 → 自动
 }
 
 QString MemeConfig::decodeModeToString(DecodeMode m)
@@ -110,10 +151,11 @@ QString MemeConfig::decodeModeToString(DecodeMode m)
     switch (m) {
     case DecodeMode::Cuda:     return "cuda";
     case DecodeMode::Vaapi:    return "vaapi";
+    case DecodeMode::Vulkan:   return "vulkan";
     case DecodeMode::Software: return "software";
     case DecodeMode::Auto:     return "auto";
     }
-    return "software";
+    return "auto";
 }
 
 FillMode MemeConfig::fillModeFromString(const QString &s)

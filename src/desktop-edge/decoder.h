@@ -12,12 +12,14 @@
 
 namespace ddplugin_meme {
 
-// 解码模式：Auto 优先独显 CUDA → 核显 VAAPI → 软解；config.cpp 从 DConfig 字符串转枚举
+// 解码模式；config.cpp 从 DConfig 字符串转枚举。
+// Auto 按 VAAPI → CUDA → Vulkan → DRM 依次尝试，命中即用，全失败再回退软解。
 enum class DecodeMode {
-    Auto = 0,      // 优先独显 CUDA，再核显 VAAPI，最后软解
-    Cuda,          // NVIDIA 硬解
-    Vaapi,         // 核显/通用硬解
-    Software       // 软解
+    Auto = 0,      // 自动：依次尝试下面的硬解，最后回退软解
+    Vaapi,         // VAAPI：Intel / AMD / 通用（多数国产 GPU 也走这条）
+    Cuda,          // CUDA：NVIDIA NVENC/NVDEC
+    Vulkan,        // Vulkan Video：跨厂商 / 国产 GPU（摩尔线程、景嘉微等）
+    Software       // 软解：最兼容，但最费 CPU
 };
 
 // 缩放/抗锯齿平滑等级（解码 swscale + 绘制）
@@ -49,6 +51,8 @@ public:
     void setPlaylist(const QList<QUrl> &list);
     void setOptions(const DecodeOptions &opt);
     void requestStop();
+    /** 冻结/解冻：冻结时不读包、不出帧，但保留文件与硬解上下文，解冻后从当前帧继续 */
+    void setPaused(bool p) { pausedFlag.store(p, std::memory_order_release); }
     void releaseFrameSlot();
 
 signals:
@@ -64,6 +68,7 @@ private:
     DecodeOptions options;
     QMutex mutex;
     std::atomic_bool stopFlag { false };
+    std::atomic_bool pausedFlag { false };
     std::atomic_int inFlight { 0 };
 };
 

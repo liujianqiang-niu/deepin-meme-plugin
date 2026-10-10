@@ -7,6 +7,8 @@ set(EDGE_SOURCES
     decoder.cpp
     menu.cpp
     config.cpp
+    fullscreenwatch.cpp
+    generated/wlr-foreign-toplevel-management-unstable-v1-protocol.c
 )
 
 add_library(dd-meme-wallpaper SHARED ${EDGE_SOURCES} meme_videowallpaper.json)
@@ -21,8 +23,10 @@ set_target_properties(dd-meme-wallpaper PROPERTIES
 target_include_directories(dd-meme-wallpaper PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/util
+    ${CMAKE_CURRENT_SOURCE_DIR}/generated
     ${DFM_INCLUDE_DIR}
     ${FFMPEG_INCLUDE_DIRS}
+    ${WAYLAND_CLIENT_INCLUDE_DIRS}
 )
 
 target_link_libraries(dd-meme-wallpaper PRIVATE
@@ -31,6 +35,7 @@ target_link_libraries(dd-meme-wallpaper PRIVATE
     ${DFM6_BASE_LIB}
     ${DFM6_FRAMEWORK_LIB}
     ${FFMPEG_LIBRARIES}
+    ${WAYLAND_CLIENT_LIBRARIES}
 )
 
 target_link_options(dd-meme-wallpaper PRIVATE -Wl,--no-undefined)

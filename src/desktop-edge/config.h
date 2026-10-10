@@ -32,12 +32,18 @@ public:
     QString currentVideo() const;
     DecodeMode decodeMode() const;
     FillMode fillMode() const;
+    bool pauseOnMaximized() const;
+    double fpsCap() const;      // 0 = 跟随源帧率
+    int renderWidth() const;    // 0 = 按屏幕物理宽
 
     // --- 写入 ---
     void setEnabled(bool e);
     void setCurrentVideo(const QString &path);
     void setDecodeMode(DecodeMode mode);
     void setFillMode(FillMode mode);
+    void setPauseOnMaximized(bool b);
+    void setFpsCap(double fps);
+    void setRenderWidth(int w);
 
     // --- 字符串 ↔ 枚举转换 ---
     static DecodeMode decodeModeFromString(const QString &s);

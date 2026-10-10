@@ -30,34 +30,57 @@ static enum AVPixelFormat getHwFormat(AVCodecContext *ctx, const enum AVPixelFor
     return pix_fmts[0];
 }
 
-static AVBufferRef *createHwDevice(DecodeMode mode, AVHWDeviceType *outType)
+// 该解码器是否支持用 type 作为 hw_device_ctx？支持则返回其输出像素格式
+static AVPixelFormat codecHwFormat(const AVCodec *codec, AVHWDeviceType type)
 {
-    QList<AVHWDeviceType> candidates;
+    for (int i = 0;; ++i) {
+        const AVCodecHWConfig *c = avcodec_get_hw_config(codec, i);
+        if (!c)
+            break;
+        if ((c->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX) && c->device_type == type)
+            return c->pix_fmt;
+    }
+    return AV_PIX_FMT_NONE;
+}
+
+// 各模式按优先级排列的候选硬件设备类型
+static QList<AVHWDeviceType> hwCandidates(DecodeMode mode)
+{
     switch (mode) {
-    case DecodeMode::Cuda:
-        candidates << AV_HWDEVICE_TYPE_CUDA;
-        break;
     case DecodeMode::Vaapi:
-        candidates << AV_HWDEVICE_TYPE_VAAPI;
-        break;
+        return { AV_HWDEVICE_TYPE_VAAPI };
+    case DecodeMode::Cuda:
+        return { AV_HWDEVICE_TYPE_CUDA };
+    case DecodeMode::Vulkan:
+        return { AV_HWDEVICE_TYPE_VULKAN };
     case DecodeMode::Software:
-        *outType = AV_HWDEVICE_TYPE_NONE;
-        return nullptr;
+        return {};
     case DecodeMode::Auto:
     default:
-        candidates << AV_HWDEVICE_TYPE_CUDA << AV_HWDEVICE_TYPE_VAAPI;
-        break;
+        // 覆盖面：Intel/AMD/通用 → VAAPI；NVIDIA → CUDA；
+        // 国产/跨厂商（摩尔线程、景嘉微等）→ Vulkan；ARM/国产 SoC → DRM
+        return { AV_HWDEVICE_TYPE_VAAPI, AV_HWDEVICE_TYPE_CUDA,
+                 AV_HWDEVICE_TYPE_VULKAN, AV_HWDEVICE_TYPE_DRM };
     }
+}
 
-    for (AVHWDeviceType t : candidates) {
+// 为 codec 选一个“解码器支持 且 设备可创建”的硬件解码设备
+static bool selectHwDevice(const AVCodec *codec, DecodeMode mode,
+                           AVBufferRef **outDev, AVHWDeviceType *outType, AVPixelFormat *outFmt)
+{
+    for (AVHWDeviceType t : hwCandidates(mode)) {
+        const AVPixelFormat fmt = codecHwFormat(codec, t);
+        if (fmt == AV_PIX_FMT_NONE)
+            continue;                       // 解码器不支持该类型，试下一个
         AVBufferRef *dev = nullptr;
-        if (av_hwdevice_ctx_create(&dev, t, nullptr, nullptr, 0) == 0) {
-            *outType = t;
-            return dev;
-        }
+        if (av_hwdevice_ctx_create(&dev, t, nullptr, nullptr, 0) < 0)
+            continue;                       // 设备不可用（无此厂商/驱动），试下一个
+        *outDev = dev;
+        *outType = t;
+        *outFmt = fmt;
+        return true;
     }
-    *outType = AV_HWDEVICE_TYPE_NONE;
-    return nullptr;
+    return false;
 }
 
 VideoDecoder::VideoDecoder(QObject *parent)
@@ -134,26 +157,13 @@ bool VideoDecoder::playOne(const QString &path)
     avcodec_parameters_to_context(ctx, st->codecpar);
 
     AVHWDeviceType hwType = AV_HWDEVICE_TYPE_NONE;
-    AVBufferRef *hwDev = createHwDevice(opt.mode, &hwType);
-    bool useHw = false;
-    if (hwDev) {
-        for (int i = 0;; ++i) {
-            const AVCodecHWConfig *cfg = avcodec_get_hw_config(codec, i);
-            if (!cfg)
-                break;
-            if ((cfg->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX)
-                && cfg->device_type == hwType) {
-                s_hwPixFmt = cfg->pix_fmt;
-                ctx->hw_device_ctx = av_buffer_ref(hwDev);
-                ctx->get_format = getHwFormat;
-                useHw = true;
-                break;
-            }
-        }
-        if (!useHw) {
-            av_buffer_unref(&hwDev);
-            hwDev = nullptr;
-        }
+    AVBufferRef *hwDev = nullptr;
+    AVPixelFormat hwFmt = AV_PIX_FMT_NONE;
+    bool useHw = selectHwDevice(codec, opt.mode, &hwDev, &hwType, &hwFmt);
+    if (useHw) {
+        s_hwPixFmt = hwFmt;
+        ctx->hw_device_ctx = av_buffer_ref(hwDev);
+        ctx->get_format = getHwFormat;
     }
 
     // 硬解单线程即可；软解开一点 slice 线程
@@ -278,6 +288,14 @@ bool VideoDecoder::playOne(const QString &path)
     };
 
     while (!stopFlag.load()) {
+        if (pausedFlag.load(std::memory_order_acquire)) {
+            // 冻结：不读包、不出帧，保留文件/硬解上下文；
+            // 拉回节拍基准，避免解冻瞬间因“落后”而狂丢帧
+            QThread::msleep(20);
+            timer.restart();
+            nextPtsUs = 0;
+            continue;
+        }
         int ret = av_read_frame(fmt, pkt);
         if (ret < 0) {
             av_seek_frame(fmt, vIndex, 0, AVSEEK_FLAG_BACKWARD);

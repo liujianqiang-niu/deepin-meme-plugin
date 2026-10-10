@@ -7,6 +7,7 @@
 #include "videoframe.h"
 #include "decoder.h"
 #include "config.h"
+#include "fullscreenwatch.h"
 
 #include <QHash>
 #include <QUrl>
@@ -43,9 +44,11 @@ public:
 
     void setPlaybackSuspended(bool suspended, const char *reason);
     void setupPowerHooks();
+    void checkVisibility();
     bool playbackSuspended = false;
     bool sessionLocked = false;
     bool screenSaverActive = false;
+    bool resumeNeedsRebuild = false;   // 暂停期间有新的播放请求 → 恢复时需重建而非简单解冻
 
     MemeConfig *cfg = nullptr;   // DConfig 读取器（非单例，engine 持有）
 
@@ -56,6 +59,9 @@ public:
     QFileSystemWatcher *watcher = nullptr;      // 监视视频资源目录
     QTimer *startDebounce = nullptr;
     QTimer *visibilityTimer = nullptr;
+    QTimer *visibilityKick = nullptr;           // 事件驱动：窗口状态变化时立即触发巡检
+
+    FullscreenWatch fullscreenWatch;             // 检测全屏窗口(遮挡桌面) → 暂停解码
 
 private:
     WallpaperEngine *q;

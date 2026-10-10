@@ -22,6 +22,72 @@ DccObject {
         }
     }
 
+    // ─── 解码方式 ───
+    DccObject {
+        name: "memeDecodeMode"
+        parentName: "meme"
+        displayName: qsTr("解码方式")
+        description: qsTr("自动：依次尝试 VAAPI→CUDA→Vulkan→DRM，命中即用；VAAPI 适合 Intel/AMD 及多数国产卡，CUDA 适合 NVIDIA，Vulkan 适合跨厂商/国产卡，软件最兼容但最费 CPU")
+        weight: 11
+        pageType: DccObject.Editor
+        backgroundType: DccObject.Normal
+        page: ComboBox {
+            property var vals: ["auto", "vaapi", "vulkan", "cuda", "software"]
+            model: [qsTr("自动(推荐)"), "VAAPI", "Vulkan", "CUDA", qsTr("软件")]
+            currentIndex: Math.max(0, vals.indexOf(dccData.decodeMode))
+            onActivated: dccData.decodeMode = vals[currentIndex]
+        }
+    }
+
+    // ─── 最大化窗口时也暂停 ───
+    DccObject {
+        name: "memePauseMax"
+        parentName: "meme"
+        displayName: qsTr("最大化窗口时也暂停")
+        description: qsTr("关闭：仅全屏窗口(完全遮挡)才暂停；开启：任何最大化窗口也暂停（半透明窗口其实仍能看到壁纸）")
+        weight: 12
+        pageType: DccObject.Editor
+        backgroundType: DccObject.Normal
+        page: Switch {
+            checked: dccData.pauseOnMaximized
+            onCheckedChanged: dccData.pauseOnMaximized = checked
+        }
+    }
+
+    // ─── 帧率上限（省电）───
+    DccObject {
+        name: "memeFpsCap"
+        parentName: "meme"
+        displayName: qsTr("帧率上限")
+        description: qsTr("限制壁纸刷新帧率以降低 CPU/GPU 占用；「跟随源」= 不限制")
+        weight: 13
+        pageType: DccObject.Editor
+        backgroundType: DccObject.Normal
+        page: ComboBox {
+            property var vals: [0, 24, 30, 60]
+            model: [qsTr("跟随源"), "24", "30", "60"]
+            currentIndex: Math.max(0, vals.indexOf(dccData.fpsCap))
+            onActivated: dccData.fpsCap = vals[currentIndex]
+        }
+    }
+
+    // ─── 渲染宽度（省电）───
+    DccObject {
+        name: "memeRenderWidth"
+        parentName: "meme"
+        displayName: qsTr("渲染宽度")
+        description: qsTr("把壁纸下采样到该宽度以降低 CPU/GPU 占用；「屏幕宽度」= 原始清晰度")
+        weight: 14
+        pageType: DccObject.Editor
+        backgroundType: DccObject.Normal
+        page: ComboBox {
+            property var vals: [0, 1920, 1280, 960, 854]
+            model: [qsTr("屏幕宽度"), "1920", "1280", "960", "854"]
+            currentIndex: Math.max(0, vals.indexOf(dccData.renderWidth))
+            onActivated: dccData.renderWidth = vals[currentIndex]
+        }
+    }
+
     // ─── 上传视频 + 进度 ───
     DccObject {
         name: "memeUpload"
@@ -44,7 +110,7 @@ DccObject {
                 }
 
                 Text {
-                    text: qsTr("支持 H264 MP4，其他格式自动转码为 H264")
+                    text: qsTr("支持 H264 / HEVC 的 MP4 直接入库；其他格式自动转码为 H264")
                     color: "#888"
                     font.pixelSize: 12
                     Layout.fillWidth: true

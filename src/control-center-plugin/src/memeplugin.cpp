@@ -66,6 +66,10 @@ void MemePlugin::readConfig()
     }
     m_enabled = cfg->value("enabled", false).toBool();
     m_currentVideo = cfg->value("currentVideo", QString()).toString();
+    m_pauseOnMaximized = cfg->value("pauseOnMaximized", false).toBool();
+    m_fpsCap = cfg->value("fpsCap", 0).toInt();
+    m_renderWidth = cfg->value("renderWidth", 0).toInt();
+    m_decodeMode = cfg->value("decodeMode", QStringLiteral("auto")).toString();
     cfg->deleteLater();
 }
 
@@ -83,6 +87,42 @@ void MemePlugin::writeConfigCurrentVideo(const QString &path)
     DConfig *cfg = DConfig::create(kAppId, kAppId, QString(), this);
     if (cfg && cfg->isValid()) {
         cfg->setValue("currentVideo", path);
+        cfg->deleteLater();
+    }
+}
+
+void MemePlugin::writeConfigPauseOnMaximized(bool b)
+{
+    DConfig *cfg = DConfig::create(kAppId, kAppId, QString(), this);
+    if (cfg && cfg->isValid()) {
+        cfg->setValue("pauseOnMaximized", b);
+        cfg->deleteLater();
+    }
+}
+
+void MemePlugin::writeConfigFpsCap(int v)
+{
+    DConfig *cfg = DConfig::create(kAppId, kAppId, QString(), this);
+    if (cfg && cfg->isValid()) {
+        cfg->setValue("fpsCap", v);
+        cfg->deleteLater();
+    }
+}
+
+void MemePlugin::writeConfigRenderWidth(int v)
+{
+    DConfig *cfg = DConfig::create(kAppId, kAppId, QString(), this);
+    if (cfg && cfg->isValid()) {
+        cfg->setValue("renderWidth", v);
+        cfg->deleteLater();
+    }
+}
+
+void MemePlugin::writeConfigDecodeMode(const QString &m)
+{
+    DConfig *cfg = DConfig::create(kAppId, kAppId, QString(), this);
+    if (cfg && cfg->isValid()) {
+        cfg->setValue("decodeMode", m);
         cfg->deleteLater();
     }
 }
@@ -106,6 +146,50 @@ void MemePlugin::setCurrentVideo(const QString &path)
         m_currentVideo = path;
         emit currentVideoChanged(path);
         writeConfigCurrentVideo(path);
+    }
+}
+
+bool MemePlugin::pauseOnMaximized() const { return m_pauseOnMaximized; }
+
+void MemePlugin::setPauseOnMaximized(bool b)
+{
+    if (m_pauseOnMaximized != b) {
+        m_pauseOnMaximized = b;
+        emit pauseOnMaximizedChanged(b);
+        writeConfigPauseOnMaximized(b);
+    }
+}
+
+int MemePlugin::fpsCap() const { return m_fpsCap; }
+
+void MemePlugin::setFpsCap(int v)
+{
+    if (m_fpsCap != v) {
+        m_fpsCap = v;
+        emit fpsCapChanged(v);
+        writeConfigFpsCap(v);
+    }
+}
+
+int MemePlugin::renderWidth() const { return m_renderWidth; }
+
+void MemePlugin::setRenderWidth(int v)
+{
+    if (m_renderWidth != v) {
+        m_renderWidth = v;
+        emit renderWidthChanged(v);
+        writeConfigRenderWidth(v);
+    }
+}
+
+QString MemePlugin::decodeMode() const { return m_decodeMode; }
+
+void MemePlugin::setDecodeMode(const QString &m)
+{
+    if (m_decodeMode != m) {
+        m_decodeMode = m;
+        emit decodeModeChanged(m);
+        writeConfigDecodeMode(m);
     }
 }
 

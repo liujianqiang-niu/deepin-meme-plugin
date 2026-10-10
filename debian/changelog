@@ -1,3 +1,28 @@
+deepin-meme-plugin (3.2.0) unstable; urgency=medium
+
+  * Feature: pause decoding while a window covers the desktop. Detected via
+    zwlr_foreign_toplevel_manager_v1; add DConfig switch "pauseOnMaximized"
+    (default false = fullscreen only) to also treat maximized windows as
+    covering; minimized windows are ignored.
+  * Feature: power-saving options "fpsCap" (frame-rate cap) and "renderWidth"
+    (downscale render width), exposed in the control center page.
+  * Feature: configurable decode mode in the control center
+    (auto/vaapi/vulkan/cuda/software). Rewrote the hardware selector to verify
+    codec support before creating the device and fall back
+    VAAPI -> CUDA -> Vulkan -> DRM -> software, covering Intel / AMD / NVIDIA
+    and cross-vendor / domestic GPUs. Added Vulkan hardware decode.
+  * Feature: accept H.264 and H.265/HEVC MP4 uploads directly (no re-encode);
+    other codecs / containers still auto-transcode to H.264.
+  * Fix: covering detection used a stale cached flag, so toggling
+    pauseOnMaximized at runtime had no effect until the window state changed;
+    it is now re-evaluated on every check.
+  * Fix: resuming after un-covering showed a black frame and took a few
+    seconds. The last frame is now kept (freeze) and the visibility check is
+    event-driven; the decoder is kept alive (paused) instead of rebuilt.
+  * Change: default decode mode is now "auto" (was "software").
+
+ -- arthas276 <22973001+arthas276@users.noreply.github.com>  Sat, 10 Oct 2026 19:32:25 +0800
+
 deepin-meme-plugin (3.1.0) unstable; urgency=medium
 
   * Make DCC/DFM include paths configurable with system fallback (no hardcoded

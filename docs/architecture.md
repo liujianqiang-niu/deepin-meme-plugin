@@ -165,4 +165,4 @@ schema：`data/configs/org.deepin.meme.json`，应用 ID = `org.deepin.meme`。
 2. **QPixmap 共享**：多屏只 `fromImage()` 一次，节省 GPU/内存带宽。
 3. **DConfig 而非 DBus**：早期方案（daemon + DBus）被废弃，改为纯插件 + 配置文件共享，减少系统服务依赖。
 4. **NV12 直通**：硬解路径走 NV12 面（无 sws），软解路径走 RGB32，减少不必要的色彩空间转换。
-5. **AV1 兼容策略**：壁纸引擎只保证 H264，其它编码（AV1/HEVC 等）由控制中心上传时自动转码兜底。
+5. **编码兼容策略**：H264 / HEVC 的 MP4 直接入库（HEVC 可由 VAAPI 硬解，避免重复编码）；其它编码（VP9 / AV1 等在多数 GPU 上无法硬解或不被壁纸列表支持）由控制中心上传时自动转码为 H264 兜底。

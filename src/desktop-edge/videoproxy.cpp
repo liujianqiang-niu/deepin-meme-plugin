@@ -38,6 +38,17 @@ void VideoProxy::stop()
     update();
 }
 
+void VideoProxy::freeze()
+{
+    // 与 stop() 的区别：不清 pixmap，也不触发重绘 →
+    // 取消遮挡的瞬间仍显示“最后一帧”，而不是黑屏；解码恢复后立刻接着动。
+    framesInWindow = 0;
+    displayFps = 0.0;
+    nextPaintUs = 0;
+    paintScheduled = false;
+    afterPaint = {};
+}
+
 void VideoProxy::setFillMode(FillMode mode)
 {
     fillMode = mode;

@@ -3,9 +3,9 @@
 cmake_minimum_required(VERSION 3.23)
 
 project(deepin-meme-plugin
-    VERSION 3.1.0
+    VERSION 3.2.0
     DESCRIPTION "Deepin dynamic wallpaper plugin"
-    LANGUAGES CXX
+    LANGUAGES C CXX
 )
 
 set(CMAKE_CXX_STANDARD 17)
@@ -56,6 +56,7 @@ find_package(Qt6 REQUIRED COMPONENTS Core Widgets Gui DBus Concurrent Network Li
 find_package(Dtk6 REQUIRED COMPONENTS Core)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(FFMPEG REQUIRED libavformat libavcodec libavutil libswscale)
+pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client)
 find_library(DFM6_BASE_LIB dfm6-base REQUIRED)
 find_library(DFM6_FRAMEWORK_LIB dfm6-framework REQUIRED)
 

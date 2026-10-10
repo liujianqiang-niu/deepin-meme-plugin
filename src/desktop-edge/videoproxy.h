@@ -45,6 +45,8 @@ public:
     ~VideoProxy() override;
 
     void stop();
+    // 暂停时“定格”：保留最后一帧画面（不清 pixmap、不重绘），只清动画状态
+    void freeze();
     void updateImage(const QImage &img);
     /** 多屏共享同一 QPixmap（主线程只 fromImage 一次） */
     void presentPixmap(const QPixmap &pm, int srcW, int srcH,
